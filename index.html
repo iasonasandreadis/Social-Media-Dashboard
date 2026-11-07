@@ -4,191 +4,223 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,600..900&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
 <style>
-/* Layout: one narrow column. Challenge slate on top, three tabs, one job per tab. */
+/* Layout: a one-screen phone app. Challenge bar on top, one scrolling screen, tab bar at the bottom, slide-up sheets for results and forms. */
 :root{
   --bg:#f2f3f5; --surface:#ffffff; --surface-2:#e9ebef; --ink:#14161a; --ink-2:#474c56; --ink-3:#6b717c; --line:#d7dae1;
-  --accent:#d63a2c; --accent-soft:#fbe3e0; --focus:#2a78d6;
+  --accent:#d63a2c; --focus:#2a78d6; --scrim:rgba(10,12,15,.45);
   --s-tt:#1baf7a; --s-ig:#eb6834; --s-yt:#2a78d6;
   --good:#0a7d0a; --bad:#c53030; --bad-soft:#fbe4e4;
   --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
   --f-body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --gut-l:max(16px,env(safe-area-inset-left,0px)); --gut-r:max(16px,env(safe-area-inset-right,0px));
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#101215; --surface:#181b20; --surface-2:#22262c; --ink:#eef0f3; --ink-2:#b6bcc6; --ink-3:#8a919c; --line:#2d3239;
-  --accent:#ff5b4d; --accent-soft:#3b1f1c; --focus:#5598e7;
+  --bg:#101215; --surface:#181b20; --surface-2:#23272d; --ink:#eef0f3; --ink-2:#b6bcc6; --ink-3:#8a919c; --line:#2d3239;
+  --accent:#ff5b4d; --focus:#5598e7; --scrim:rgba(0,0,0,.6);
   --s-tt:#199e70; --s-ig:#d95926; --s-yt:#3987e5;
   --good:#3fbf3f; --bad:#f06a6a; --bad-soft:#3a1c1c; color-scheme:dark;
 }}
 :root[data-theme="dark"]{
-  --bg:#101215; --surface:#181b20; --surface-2:#22262c; --ink:#eef0f3; --ink-2:#b6bcc6; --ink-3:#8a919c; --line:#2d3239;
-  --accent:#ff5b4d; --accent-soft:#3b1f1c; --focus:#5598e7;
+  --bg:#101215; --surface:#181b20; --surface-2:#23272d; --ink:#eef0f3; --ink-2:#b6bcc6; --ink-3:#8a919c; --line:#2d3239;
+  --accent:#ff5b4d; --focus:#5598e7; --scrim:rgba(0,0,0,.6);
   --s-tt:#199e70; --s-ig:#d95926; --s-yt:#3987e5;
   --good:#3fbf3f; --bad:#f06a6a; --bad-soft:#3a1c1c; color-scheme:dark;
 }
-*{box-sizing:border-box}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
-body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
-h1,h2,h3{font-family:var(--f-display);font-stretch:115%;line-height:1.1;margin:0;letter-spacing:-.01em;text-wrap:balance}
+html{height:100%;touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{height:100%;overflow:hidden;overscroll-behavior:none;background:var(--surface);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--f-display);font-stretch:115%;line-height:1.15;margin:0;letter-spacing:-.01em}
 p{margin:0}
-.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 64px;display:flex;flex-direction:column;gap:16px}
-.view{display:flex;flex-direction:column;gap:16px}
-.muted{color:var(--ink-3)}
-.small{font-size:.85rem}
-.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.muted{color:var(--ink-3)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 
-header h1{font-size:1.15rem;font-weight:900;font-stretch:125%;text-transform:uppercase}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
-.card h2{font-size:1.2rem}
-.card h3{font-size:1rem}
+/* app shell */
+.app{height:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.gut{padding-left:var(--gut-l);padding-right:var(--gut-r)}
 
-/* challenge slate */
-.slate{border:1.5px solid var(--ink)}
-.slate-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.day{font-family:var(--f-display);font-stretch:125%;font-weight:900;font-size:2.2rem;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
-.day small{font-size:1rem;color:var(--ink-3);font-weight:700;letter-spacing:0}
-.rec{font-family:var(--f-mono);font-size:.75rem;font-weight:600;color:var(--accent);display:inline-flex;align-items:center;gap:6px}
-.rec i{width:8px;height:8px;border-radius:50%;background:var(--accent)}
-.rec.done{color:var(--good)} .rec.done i{background:var(--good)}
-.bar{height:6px;border-radius:99px;background:var(--surface-2);overflow:hidden}
-.bar i{display:block;height:100%;background:var(--accent)}
-.plats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.plat-btn{justify-content:center;gap:8px;padding-inline:8px}
-.plat-btn i{width:9px;height:9px;border-radius:3px;flex:none}
-.plat-btn[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.plat-btn[aria-pressed="true"]:hover{background:var(--ink)}
+/* challenge bar */
+.top{flex:none;padding-top:10px;padding-bottom:12px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.ch{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ch-day{display:flex;flex-direction:column;min-width:0}
+.ch-day b{font-family:var(--f-display);font-stretch:125%;font-weight:900;font-size:1.65rem;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.ch-day b small{font-size:.9rem;color:var(--ink-3);letter-spacing:0}
+.ch-day span{font-size:.8rem;color:var(--ink-3);margin-top:3px;white-space:nowrap}
+.ch-plats{display:flex;gap:8px;flex:none}
+.pb{width:48px;height:48px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink-2);font-family:var(--f-mono);font-weight:600;font-size:.78rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:0;cursor:pointer}
+.pb i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.pb[aria-pressed="true"]{background:var(--c);border-color:var(--c);color:#fff}
+.pb[aria-pressed="true"] i{background:#fff}
+.bar{height:5px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:99px}
 
-/* tabs */
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface-2);border-radius:10px;padding:4px;gap:4px}
-.tabs a{text-align:center;text-decoration:none;color:var(--ink-2);font-weight:600;padding:9px 6px;border-radius:7px}
-.tabs a[aria-current="page"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+/* screen */
+.screen{flex:1;min-height:0;background:var(--bg);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-top:16px;padding-bottom:20px}
+.view{display:flex;flex-direction:column;gap:14px}
+.view-title{font-size:1.35rem;font-weight:850}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.list-h{font-size:.78rem;font-family:var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-top:6px}
 
-/* controls */
-label.f{display:flex;flex-direction:column;gap:4px;font-size:.82rem;font-weight:600;color:var(--ink-2);min-width:0}
-input[type=text],input[type=url],input[type=number],select,textarea{font:inherit;font-size:.95rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;width:100%;min-width:0}
-textarea{resize:vertical;min-height:110px;line-height:1.45}
-input:focus,select:focus,textarea:focus{outline:2px solid var(--focus);outline-offset:0;border-color:transparent}
-input[type=file]{font-size:.82rem;color:var(--ink-2);max-width:100%}
-button{font:inherit;font-size:.9rem;font-weight:600;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:9px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
-button:hover{background:var(--surface-2)}
-button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);justify-content:center;padding:11px 16px}
-button.primary:hover{opacity:.88;background:var(--ink)}
-button.ghost{border-color:transparent;background:transparent;color:var(--ink-3);padding:4px 8px;font-size:.8rem}
-button.ghost:hover{color:var(--ink);background:var(--surface-2)}
-button:disabled{opacity:.45;cursor:not-allowed}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.or{font-size:.8rem;color:var(--ink-3);display:flex;align-items:center;gap:10px}
-.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
-.add{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:end}
-@media (max-width:600px){.add{grid-template-columns:repeat(2,minmax(0,1fr))}.add .full{grid-column:1/-1}}
-
-/* lists and output */
-.list{display:flex;flex-direction:column}
-.item{border-top:1px solid var(--line);padding:12px 0;display:flex;flex-direction:column;gap:8px;min-width:0}
-.item:first-child{border-top:0;padding-top:0}
-.item:last-child{padding-bottom:0}
-.item-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.item-head .t{font-weight:600;min-width:0;overflow-wrap:anywhere;cursor:pointer}
-.item-head .t:hover{text-decoration:underline}
-.tag{display:inline-flex;align-items:center;gap:5px;font-family:var(--f-mono);font-size:.7rem;font-weight:600;color:var(--ink-3)}
-.tag i{width:8px;height:8px;border-radius:2px}
-.out{white-space:pre-wrap;font-size:.88rem;line-height:1.55;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px;max-height:420px;overflow:auto;overflow-wrap:anywhere}
-.empty{text-align:center;color:var(--ink-3);font-size:.9rem;padding:18px 8px}
-.note{font-size:.85rem;border-radius:8px;padding:10px 12px;background:var(--surface-2);color:var(--ink-2)}
+/* controls (16px text stops iPhone zooming in on focus) */
+input[type=text],input[type=url],input[type=number],textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 13px;width:100%;min-width:0;-webkit-appearance:none;appearance:none}
+textarea{resize:none;height:104px;line-height:1.4}
+input:focus,textarea:focus{outline:2px solid var(--focus);outline-offset:0;border-color:transparent}
+button{font:inherit;font-size:16px;font-weight:600;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);min-height:48px;padding:0 16px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+button:active{transform:scale(.98)}
+button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);width:100%}
+button.grow{flex:1}
+button:disabled{opacity:.4}
+.upload{display:flex;align-items:center;gap:10px;min-height:48px;padding:0 13px;border:1.5px dashed var(--line);border-radius:12px;color:var(--ink-2);font-weight:600;font-size:.95rem;cursor:pointer;min-width:0}
+.upload span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.upload input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.upload.has{border-style:solid;border-color:var(--ink);color:var(--ink)}
+.row{display:flex;gap:10px;align-items:center}
+.note{font-size:.88rem;border-radius:12px;padding:10px 12px;background:var(--surface-2);color:var(--ink-2)}
 .note.err{background:var(--bad-soft);color:var(--bad)}
-details summary{cursor:pointer;font-size:.82rem;color:var(--ink-3);font-weight:600}
-details[open] summary{margin-bottom:8px}
-.hook{font-weight:700;font-size:1rem;min-width:0;overflow-wrap:anywhere}
+
+/* rows */
+.rows{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.r{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;padding:12px 14px;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;text-align:left;font-weight:400;white-space:normal;justify-content:flex-start}
+.r:first-child{border-top:0}
+.r .main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.r .t{font-weight:600;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.r .s{font-size:.82rem;color:var(--ink-3);display:flex;gap:10px;align-items:center}
+.r .end{flex:none;text-align:right}
+.chev{color:var(--ink-3);font-size:1.3rem;flex:none}
+.tag{display:inline-flex;align-items:center;gap:5px;font-family:var(--f-mono);font-size:.72rem;font-weight:600;color:var(--ink-3)}
+.tag i{width:8px;height:8px;border-radius:2px}
+.empty{text-align:center;color:var(--ink-3);font-size:.92rem;padding:22px 14px}
+.idea{display:flex;flex-direction:column;gap:6px;padding:14px;border-top:1px solid var(--line)}
+.idea:first-child{border-top:0}
+.idea .hook{font-weight:700;font-size:1.02rem;line-height:1.35}
+.idea .why{font-size:.86rem;color:var(--ink-2)}
+.idea .row{justify-content:space-between}
+.idea button{min-height:36px;font-size:.85rem;padding:0 12px}
 .tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;min-width:0}
-.tile .k{font-size:.72rem;color:var(--ink-3);font-weight:600}
-.tile .n{font-family:var(--f-display);font-stretch:118%;font-weight:800;font-size:1.5rem;font-variant-numeric:tabular-nums;line-height:1.15}
-.tile .s{font-size:.75rem;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.md{font-size:.92rem;line-height:1.6}
-.md h4{font-family:var(--f-display);font-stretch:112%;font-size:.95rem;margin:12px 0 2px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;min-width:0}
+.tile .k{font-size:.72rem;color:var(--ink-3);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .n{font-family:var(--f-display);font-stretch:118%;font-weight:850;font-size:1.45rem;font-variant-numeric:tabular-nums;line-height:1.2}
+.tile .s{font-size:.72rem;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* bottom tab bar */
+.nav{flex:none;display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface);border-top:1px solid var(--line);padding-top:6px;padding-bottom:6px;user-select:none;-webkit-user-select:none}
+.nav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:52px;text-decoration:none;color:var(--ink-3);font-size:.72rem;font-weight:600;border-radius:12px}
+.nav a svg{width:24px;height:24px}
+.nav a[aria-current="page"]{color:var(--ink)}
+.nav a[aria-current="page"] svg{color:var(--accent)}
+
+/* sheets */
+.scrim{position:absolute;inset:0;background:var(--scrim);z-index:30}
+.sheet{position:absolute;left:0;right:0;bottom:0;max-height:calc(100% - 24px);z-index:31;background:var(--surface);border-radius:20px 20px 0 0;display:flex;flex-direction:column;box-shadow:0 -8px 30px rgba(0,0,0,.18);animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.6}}
+@media (prefers-reduced-motion:reduce){.sheet{animation:none}}
+.sheet-head{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:14px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.sheet-head h3{font-size:1.1rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sheet-head button{min-height:40px;padding:0 12px;font-size:.92rem;border-color:transparent;background:var(--surface-2)}
+.sheet-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-top:14px;padding-bottom:14px;display:flex;flex-direction:column;gap:12px}
+.sheet-foot{flex:none;display:flex;gap:10px;padding-top:10px;padding-bottom:12px;border-top:1px solid var(--line)}
+.out{white-space:pre-wrap;font-size:.92rem;line-height:1.55;overflow-wrap:anywhere}
+details summary{cursor:pointer;font-size:.88rem;color:var(--ink-3);font-weight:600;min-height:40px;display:flex;align-items:center}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.seg button{font-size:.92rem;padding:0 6px}
+.seg button i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:.82rem;font-weight:600;color:var(--ink-2)}
+.md{font-size:.95rem;line-height:1.55}
+.md h4{font-family:var(--f-display);font-stretch:112%;font-size:1rem;margin:14px 0 4px}
 .md h4:first-child{margin-top:0}
-.md ul{margin:2px 0 6px;padding-left:20px}
+.md ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
 .md p{margin:4px 0}
-.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:.85rem;font-weight:600;z-index:20}
+.toast{position:absolute;left:50%;bottom:84px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.9rem;font-weight:600;z-index:40;white-space:nowrap}
 </style>
 
-<div class="wrap">
-  <header class="row" style="justify-content:space-between">
-    <h1>Creator Control Room</h1>
-    <span class="small muted" id="status"></span>
-  </header>
+<div class="app" id="app">
+  <header class="top gut" id="top" aria-label="90-day challenge"></header>
 
-  <section class="card slate" id="slate" aria-label="90-day challenge"></section>
+  <main class="screen gut" id="screen">
+    <section id="v-recreate" class="view">
+      <h2 class="view-title">Recreate a video</h2>
+      <form class="card" id="rc-form" autocomplete="off">
+        <input type="url" id="rc-url" aria-label="Video link" placeholder="Video link">
+        <textarea id="rc-text" aria-label="Transcript" placeholder="Paste the transcript or captions"></textarea>
+        <label class="upload" id="rc-upload"><input type="file" id="rc-file" accept="video/*"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg><span id="rc-file-name">Or upload the video</span></label>
+        <button type="submit" class="primary" id="rc-go">Make editor prompt</button>
+        <div id="rc-msg"></div>
+      </form>
+      <h3 class="list-h">Your videos</h3>
+      <div id="rc-list"></div>
+    </section>
 
-  <nav class="tabs" aria-label="Sections">
-    <a href="#recreate" data-tab="recreate">Recreate</a>
-    <a href="#ideas" data-tab="ideas">Ideas</a>
-    <a href="#stats" data-tab="stats">Stats</a>
+    <section id="v-ideas" class="view" hidden>
+      <h2 class="view-title">Video ideas</h2>
+      <form class="card" id="id-form" autocomplete="off">
+        <input type="text" id="id-news" aria-label="Topic or news" placeholder="Topic or news (optional)" enterkeyhint="go">
+        <button type="submit" class="primary" id="id-go">Get 8 ideas</button>
+        <div id="id-msg"></div>
+      </form>
+      <div id="id-list"></div>
+    </section>
+
+    <section id="v-stats" class="view" hidden>
+      <h2 class="view-title">Stats</h2>
+      <div class="tiles" id="st-tiles"></div>
+      <div class="row">
+        <button type="button" class="grow" id="log-open" style="background:var(--ink);color:var(--bg);border-color:var(--ink)">+ Log a post</button>
+        <button type="button" class="grow" id="an-open">What's working?</button>
+      </div>
+      <h3 class="list-h">Posts</h3>
+      <div id="st-list"></div>
+    </section>
+  </main>
+
+  <nav class="nav gut" aria-label="Sections">
+    <a href="#recreate" data-tab="recreate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2.5"/><path d="M16 10.5l5-3v9l-5-3z"/></svg>Recreate</a>
+    <a href="#ideas" data-tab="ideas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>Ideas</a>
+    <a href="#stats" data-tab="stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 20V12M12 20V5M19 20v-6"/></svg>Stats</a>
   </nav>
 
-  <!-- RECREATE -->
-  <section id="v-recreate" class="view">
-    <form class="card" id="rc-form" autocomplete="off">
-      <h2>Recreate a video</h2>
-      <input type="url" id="rc-url" aria-label="Video link" placeholder="Video link (TikTok, Instagram or YouTube)">
-      <textarea id="rc-text" aria-label="Transcript" placeholder="Paste the transcript or captions"></textarea>
-      <div class="or">or</div>
-      <label class="f">Upload the video file and Claude reads it<input type="file" id="rc-file" accept="video/*"></label>
-      <button type="submit" class="primary" id="rc-go">Make my editor prompt</button>
-      <div id="rc-msg"></div>
-    </form>
-    <div class="card">
-      <h3>Your videos</h3>
-      <div class="list" id="rc-list"></div>
-    </div>
-  </section>
+  <div class="scrim" id="scrim" hidden></div>
 
-  <!-- IDEAS -->
-  <section id="v-ideas" class="view" hidden>
-    <form class="card" id="id-form" autocomplete="off">
-      <h2>Video ideas</h2>
-      <textarea id="id-news" aria-label="News or trends" placeholder="Optional: paste news, tweets or trends you want ideas about"></textarea>
-      <button type="submit" class="primary" id="id-go">Give me 8 ideas</button>
-      <div id="id-msg"></div>
-    </form>
-    <div class="card"><div class="list" id="id-list"></div></div>
-  </section>
+  <!-- result sheet: video prompt, live progress, or analysis -->
+  <div class="sheet" id="sheet-view" role="dialog" aria-modal="true" aria-labelledby="sv-title" hidden>
+    <div class="sheet-head gut"><h3 id="sv-title"></h3><button type="button" data-close>Close</button></div>
+    <div class="sheet-body gut" id="sv-body"></div>
+    <div class="sheet-foot gut" id="sv-foot"></div>
+  </div>
 
-  <!-- STATS -->
-  <section id="v-stats" class="view" hidden>
-    <div class="tiles" id="st-tiles"></div>
-    <form class="card" id="st-form" autocomplete="off">
-      <h2>Log a post</h2>
-      <div class="add">
-        <label class="f full">Video<input type="text" id="st-title" placeholder="What was it?"></label>
-        <label class="f">Platform<select id="st-plat"><option value="tt">TikTok</option><option value="ig">Instagram</option><option value="yt">YouTube</option></select></label>
-        <label class="f">Views<input type="number" min="0" id="st-views" inputmode="numeric"></label>
-        <label class="f">Likes<input type="number" min="0" id="st-likes" inputmode="numeric"></label>
-        <button type="submit" class="primary full">Add</button>
+  <!-- log a post sheet (static so typing survives updates) -->
+  <form class="sheet" id="sheet-log" role="dialog" aria-modal="true" aria-labelledby="sl-title" autocomplete="off" hidden>
+    <div class="sheet-head gut"><h3 id="sl-title">Log a post</h3><button type="button" data-close>Cancel</button></div>
+    <div class="sheet-body gut">
+      <label class="f">Video<input type="text" id="lg-title" placeholder="What was it?" enterkeyhint="next"></label>
+      <div class="seg" id="lg-plat" role="group" aria-label="Platform">
+        <button type="button" data-p="tt" aria-pressed="true" style="--c:var(--s-tt)"><i></i>TikTok</button>
+        <button type="button" data-p="ig" aria-pressed="false" style="--c:var(--s-ig)"><i></i>Insta</button>
+        <button type="button" data-p="yt" aria-pressed="false" style="--c:var(--s-yt)"><i></i>YouTube</button>
       </div>
-    </form>
-    <div class="card">
-      <div class="item-head"><h3>What's working</h3><button type="button" id="an-go">Analyze my stats</button></div>
-      <div id="an-out"></div>
+      <div class="two">
+        <label class="f">Views<input type="number" id="lg-views" inputmode="numeric" min="0" placeholder="0"></label>
+        <label class="f">Likes<input type="number" id="lg-likes" inputmode="numeric" min="0" placeholder="0"></label>
+      </div>
     </div>
-    <div class="card">
-      <h3>Posts</h3>
-      <div class="list" id="st-list"></div>
-    </div>
-  </section>
+    <div class="sheet-foot gut"><button type="submit" class="primary">Save post</button></div>
+  </form>
+
+  <div class="toast" id="toast" role="status" hidden></div>
 </div>
-<div class="toast" id="toast" role="status" hidden></div>
 
 <script>
 (() => {
 'use strict';
-const PLATS = [{id:'tt',name:'TikTok',c:'var(--s-tt)'},{id:'ig',name:'Instagram',c:'var(--s-ig)'},{id:'yt',name:'YouTube',c:'var(--s-yt)'}];
+const PLATS = [{id:'tt',name:'TikTok',short:'TT',c:'var(--s-tt)'},{id:'ig',name:'Instagram',short:'IG',c:'var(--s-ig)'},{id:'yt',name:'YouTube',short:'YT',c:'var(--s-yt)'}];
 const PLAT = Object.fromEntries(PLATS.map(p => [p.id, p]));
 const ABOUT = 'A creator building a personal brand with short-form videos about startups, AI, tech news, skits and general life, cross-posted to TikTok, Instagram Reels and YouTube Shorts. Goal: grow an audience and go viral consistently. Currently doing a 90-day daily posting challenge.';
 const DAYS = 90;
 
-const S = { db:null, sample:null, imgMax:0, live:false, videos:[], posts:[], ideas:[], analysis:null, start:'', days:{}, open:null, confirm:null, busy:{} };
+const S = { db:null, sample:null, imgMax:0, live:false, videos:[], posts:[], ideas:[], analysis:null, start:'', days:{}, sheet:null, confirm:null, busy:{}, logPlat:'tt' };
 
 /* utils */
 const $ = id => document.getElementById(id);
@@ -205,9 +237,9 @@ const fmtDate = s => s ? parseIso(s).toLocaleDateString(undefined,{month:'short'
 const compact = n => { n = num(n); const a = Math.abs(n); if (a>=1e6) return (n/1e6).toFixed(a>=1e7?0:1).replace(/\.0$/,'')+'M'; if (a>=1e3) return (n/1e3).toFixed(a>=1e4?0:1).replace(/\.0$/,'')+'K'; return String(Math.round(n)); };
 const tag = id => PLAT[id] ? `<span class="tag"><i style="background:${PLAT[id].c}"></i>${PLAT[id].name}</span>` : '';
 const detect = u => { u = String(u||'').toLowerCase(); return u.includes('tiktok.') ? 'tt' : u.includes('instagram.') ? 'ig' : u.includes('youtu') ? 'yt' : ''; };
-function toast(m){ const t = $('toast'); t.textContent = m; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(()=>t.hidden = true, 2000); }
+function toast(m){ const t = $('toast'); t.textContent = m; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(()=>t.hidden = true, 1800); }
 function msg(id, text, err){ $(id).innerHTML = text ? `<div class="note ${err?'err':''}">${esc(text)}</div>` : ''; }
-async function copy(text, btn){ try { await navigator.clipboard.writeText(text); toast('Copied'); if (btn){ const o = btn.textContent; btn.textContent = 'Copied'; setTimeout(()=>btn.textContent = o, 1200); } } catch(e){ toast('Copy blocked. Select the text and copy it.'); } }
+async function copy(text, btn){ try { await navigator.clipboard.writeText(text); toast('Copied'); if (btn){ const o = btn.textContent; btn.textContent = 'Copied ✓'; setTimeout(()=>btn.textContent = o, 1200); } } catch(e){ toast('Copy blocked. Press and hold the text to copy.'); } }
 function md(text){ let h = '', ul = false; const il = s => s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
   for (const raw of esc(text).split('\n')){ const l = raw.trim();
     if (/^[-*•] /.test(l)){ if (!ul){ h += '<ul>'; ul = true; } h += `<li>${il(l.slice(2))}</li>`; continue; }
@@ -216,7 +248,8 @@ function md(text){ let h = '', ul = false; const il = s => s.replace(/\*\*(.+?)\
   return h + (ul ? '</ul>' : ''); }
 function aiErr(e){ const c = e && e.code;
   if (['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(c)) return "Claude isn't allowed on this page yet. Allow it from the page's permissions and try again.";
-  return ({cancelled:'Stopped.', rate_limited:"You've hit your Claude limit for now. Try again later.", refused:'Claude declined this one. Try different text.', invalid_json:'Something came back garbled. Press the button again.', prompt_too_large:'That transcript is too long. Paste a shorter part.', image_rejected:"Couldn't read that video. Try another file or paste the transcript.", images_unavailable:"Video upload doesn't work in this view. Paste the transcript instead."})[c] || "Couldn't reach Claude. Try again."; }
+  return ({cancelled:'Stopped.', rate_limited:"You've hit your Claude limit for now. Try again later.", refused:'Claude declined this one. Try different text.', invalid_json:'Something came back garbled. Try again.', prompt_too_large:'That transcript is too long. Paste a shorter part.', image_rejected:"Couldn't read that video. Try another file or paste the transcript.", images_unavailable:"Video upload doesn't work here. Paste the transcript instead."})[c] || "Couldn't reach Claude. Try again."; }
+const blurActive = () => { const a = document.activeElement; if (a && a.blur) a.blur(); };
 
 /* storage */
 const q = {};
@@ -229,14 +262,14 @@ const saveChallenge = () => putMeta('challenge', {start:S.start, days:S.days});
 async function boot(){
   route();
   const c = window.claude;
-  if (!c || typeof c.use !== 'function'){ $('status').textContent = 'Not saving: open this page in Claude'; return; }
+  if (!c || typeof c.use !== 'function') return;
   c.use('sample').then(async s => { S.sample = s; if (s){ try { const l = await s.limits(); S.imgMax = l.images ? l.images.maxCount : 0; } catch(e){} } render(); });
   const db = await c.use('db');
-  if (!db){ $('status').textContent = 'Not saving: open this page in Claude'; return; }
-  S.db = db; $('status').textContent = 'Loading…';
-  const timer = setTimeout(() => { if (!S.live) $('status').textContent = "Can't reach your saved data yet"; }, 10000);
-  const ok = snap => { if (!snap.metadata.fromCache && !S.live){ S.live = true; clearTimeout(timer); $('status').textContent = ''; } };
-  const fail = () => { clearTimeout(timer); $('status').textContent = 'Lost connection. Reload the page.'; };
+  if (!db){ toast('Not saving: open this page in Claude'); return; }
+  S.db = db;
+  const timer = setTimeout(() => { if (!S.live) toast("Can't reach your saved data yet"); }, 10000);
+  const ok = snap => { if (!snap.metadata.fromCache && !S.live){ S.live = true; clearTimeout(timer); } };
+  const fail = () => { clearTimeout(timer); toast('Lost connection. Reopen the app.'); };
   for (const col of ['videos','posts']) db.collection(col).onSnapshot(snap => { S[col] = snap.docs.map(d => ({...d.data(), id:d.id})).sort((a,b) => num(b.createdAt)-num(a.createdAt)); ok(snap); render(); }, fail);
   db.doc('meta/challenge').onSnapshot(snap => { const d = snap.exists ? snap.data() : {}; S.start = d.start || ''; S.days = d.days ? JSON.parse(JSON.stringify(d.days)) : {}; ok(snap); render(); }, fail);
   db.doc('meta/ideas').onSnapshot(snap => { const d = snap.exists ? snap.data() : {}; S.ideas = Array.isArray(d.list) ? d.list : []; ok(snap); render(); }, fail);
@@ -248,7 +281,8 @@ const VIEWS = ['recreate','ideas','stats'];
 let view = 'recreate';
 function route(){ const h = location.hash.slice(1); view = VIEWS.includes(h) ? h : 'recreate';
   for (const v of VIEWS) $('v-'+v).hidden = v !== view;
-  document.querySelectorAll('.tabs a').forEach(a => a.setAttribute('aria-current', a.dataset.tab === view ? 'page' : 'false')); render(); }
+  document.querySelectorAll('.nav a').forEach(a => a.setAttribute('aria-current', a.dataset.tab === view ? 'page' : 'false'));
+  $('screen').scrollTop = 0; render(); }
 window.addEventListener('hashchange', route);
 
 /* challenge: a day counts when you post on at least one platform */
@@ -257,72 +291,100 @@ const doneDay = d => Object.values(posted(d)).some(Boolean);
 function streak(){ const t = today(); let d = doneDay(t) ? t : addDays(t,-1), n = 0; while (S.start && d >= S.start && doneDay(d)){ n++; d = addDays(d,-1); } return n; }
 
 /* render */
-function render(){ renderSlate(); ({recreate:renderRecreate, ideas:renderIdeas, stats:renderStats})[view](); }
+function render(){ renderTop(); ({recreate:renderRecreate, ideas:renderIdeas, stats:renderStats})[view](); renderSheet(); }
 
-function renderSlate(){
-  const el = $('slate'); const t = today();
+function renderTop(){
+  const el = $('top'); const t = today();
   if (!S.start){
-    el.innerHTML = `<div class="slate-top"><div><div class="day">DAY 0<small> /90</small></div><p class="small muted" style="margin-top:6px">Post every day for 90 days.</p></div><button type="button" class="primary" id="ch-start">Start the challenge today</button></div>`;
+    el.innerHTML = `<div class="ch"><div class="ch-day"><b>DAY 0<small> /90</small></b><span>90 days of posting, starting now</span></div><button type="button" id="ch-start" style="background:var(--accent);color:#fff;border-color:var(--accent)">Start</button></div>`;
     return;
   }
   const n = Math.min(DAYS, Math.max(1, diff(S.start, t) + 1));
   let done = 0; for (let i = 0; i < n; i++) if (doneDay(addDays(S.start, i))) done++;
-  const p = posted(t); const st = streak(); const td = doneDay(t);
+  const p = posted(t); const st = streak();
   el.innerHTML = `
-    <div class="slate-top">
-      <div class="day">DAY ${n}<small> /90</small></div>
-      <span class="rec ${td?'done':''}"><i></i>${td ? 'Posted today' : 'Not posted yet'}</span>
+    <div class="ch">
+      <div class="ch-day"><b>DAY ${n}<small> /90</small></b><span>${st} day streak · ${doneDay(t) ? 'posted today ✓' : 'tap where you posted'}</span></div>
+      <div class="ch-plats">${PLATS.map(x => `<button type="button" class="pb" data-day-plat="${x.id}" aria-pressed="${p[x.id]}" aria-label="Posted on ${x.name} today" style="--c:${x.c}"><i></i>${x.short}</button>`).join('')}</div>
     </div>
-    <div class="bar" aria-label="${done} of 90 days done"><i style="width:${(done/DAYS*100).toFixed(1)}%"></i></div>
-    <p class="small muted"><b class="mono" style="color:var(--ink)">${st}</b> day streak · <b class="mono" style="color:var(--ink)">${done}</b> of ${n} days done · tap where you posted today</p>
-    <div class="plats">${PLATS.map(x => `<button type="button" class="plat-btn" data-day-plat="${x.id}" aria-pressed="${p[x.id]}"><i style="background:${x.c}"></i>${x.name}</button>`).join('')}</div>`;
+    <div class="bar" aria-label="${done} of 90 days done"><i style="width:${Math.max(2, done/DAYS*100).toFixed(1)}%"></i></div>`;
 }
 
 function renderRecreate(){
   $('rc-go').disabled = !!S.busy.rc || !S.sample;
-  if (!S.videos.length && !S.busy.rc){ $('rc-list').innerHTML = `<div class="empty">Videos you recreate show up here, each with its editor prompt.</div>`; return; }
-  const pending = S.busy.rc ? `<div class="item"><div class="item-head"><span class="t">Working on it…</span></div><div class="out" id="rc-live">${esc(S.busy.rcText || 'Claude is reading the video. This takes about a minute.')}</div></div>` : '';
-  $('rc-list').innerHTML = pending + S.videos.map(v => {
-    const open = S.open === v.id;
-    return `<div class="item">
-      <div class="item-head"><span class="t" data-open="${esc(v.id)}" role="button" tabindex="0" aria-expanded="${open}">${esc(v.title || 'Untitled video')}</span>
-        <div class="row" style="flex-wrap:nowrap">${tag(v.platform)}<button type="button" data-copy="${esc(v.id)}">Copy prompt</button></div></div>
-      ${open ? `
-        <div class="out">${esc(v.prompt || '')}</div>
-        ${v.transcript ? `<details><summary>Transcript</summary><div class="out">${esc(v.transcript)}</div></details>` : ''}
-        <div class="row" style="justify-content:space-between">${v.url ? `<a class="small" href="${esc(v.url)}" target="_blank" rel="noopener">Open original ↗</a>` : '<span></span>'}
-          <button type="button" class="ghost" data-del-video="${esc(v.id)}">${S.confirm === v.id ? 'Tap again to delete' : 'Delete'}</button></div>` : ''}
-    </div>`; }).join('');
+  $('rc-go').textContent = S.busy.rc ? 'Working on it…' : 'Make editor prompt';
+  $('rc-list').innerHTML = S.videos.length ? `<div class="rows">${S.videos.map(v => `
+    <button type="button" class="r" data-open-video="${esc(v.id)}">
+      <span class="main"><span class="t">${esc(v.title || 'Untitled video')}</span><span class="s">${tag(v.platform)}<span>${v.createdAt ? new Date(v.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric'}) : ''}</span></span></span>
+      <span class="chev" aria-hidden="true">›</span></button>`).join('')}</div>`
+    : `<div class="rows"><div class="empty">Your editor prompts get saved here.</div></div>`;
 }
 
 function renderIdeas(){
   $('id-go').disabled = !!S.busy.ideas || !S.sample;
-  $('id-list').innerHTML = S.ideas.length ? S.ideas.map((i, k) => `
-    <div class="item">
-      <div class="item-head"><span class="hook">“${esc(i.hook)}”</span><button type="button" class="ghost" data-copy-idea="${k}">Copy</button></div>
-      <span class="small"><b>${esc(i.title)}</b> · ${esc(i.why)}</span>
-    </div>`).join('') : `<div class="empty">Your ideas show up here. Each one comes with the first line to say on camera.</div>`;
+  $('id-go').textContent = S.busy.ideas ? 'Thinking…' : 'Get 8 ideas';
+  $('id-list').innerHTML = S.ideas.length ? `<div class="rows">${S.ideas.map((i, k) => `
+    <div class="idea"><span class="hook">“${esc(i.hook)}”</span><span class="why"><b>${esc(i.title)}</b> · ${esc(i.why)}</span>
+      <div class="row"><span></span><button type="button" data-copy-idea="${k}">Copy</button></div></div>`).join('')}</div>`
+    : `<div class="rows"><div class="empty">Ideas show up here, each with the first line to say on camera.</div></div>`;
 }
 
 function renderStats(){
-  $('an-go').disabled = !!S.busy.an || !S.sample || !S.posts.length;
   const t = today(), wk = S.posts.filter(p => p.date >= addDays(t,-6));
   const views = wk.reduce((s,p) => s + num(p.views), 0);
   const best = [...S.posts].sort((a,b) => num(b.views)-num(a.views))[0];
+  $('an-open').disabled = !S.posts.length;
   $('st-tiles').innerHTML = `
-    <div class="tile"><div class="k">Views this week</div><div class="n">${compact(views)}</div><div class="s">last 7 days</div></div>
-    <div class="tile"><div class="k">Posts this week</div><div class="n">${wk.length}</div><div class="s">all platforms</div></div>
-    <div class="tile"><div class="k">Best post</div><div class="n">${best ? compact(best.views) : '–'}</div><div class="s" title="${best ? esc(best.title) : ''}">${best ? esc(best.title) : 'none yet'}</div></div>`;
-  $('st-list').innerHTML = S.posts.length ? S.posts.slice(0, 30).map(p => `
-    <div class="item"><div class="item-head">
-      <div style="min-width:0"><div style="font-weight:600;overflow-wrap:anywhere">${esc(p.title)}</div><div class="row small muted" style="gap:10px">${tag(p.platform)}<span>${fmtDate(p.date)}</span></div></div>
-      <div class="row" style="flex-wrap:nowrap"><div style="text-align:right"><div class="mono" style="font-weight:600">${compact(p.views)}</div><div class="small muted" style="white-space:nowrap">${compact(p.likes)} likes</div></div>
-      <button type="button" class="ghost" data-del-post="${esc(p.id)}" aria-label="Delete post">${S.confirm === p.id ? 'Delete?' : '✕'}</button></div>
-    </div></div>`).join('') : `<div class="empty">Log each video after you post it. It also counts toward your challenge.</div>`;
-  const out = $('an-out');
-  if (S.busy.an) out.innerHTML = `<div class="md">${md(S.busy.an)}</div>`;
-  else if (S.analysis && S.analysis.text) out.innerHTML = `<div class="md">${md(S.analysis.text)}</div>`;
-  else out.innerHTML = `<p class="small muted">Log a few posts, then let Claude tell you what to do more of.</p>`;
+    <div class="tile"><div class="k">Views · 7d</div><div class="n">${compact(views)}</div><div class="s">this week</div></div>
+    <div class="tile"><div class="k">Posts · 7d</div><div class="n">${wk.length}</div><div class="s">all platforms</div></div>
+    <div class="tile"><div class="k">Best post</div><div class="n">${best ? compact(best.views) : '–'}</div><div class="s">${best ? esc(best.title) : 'none yet'}</div></div>`;
+  $('st-list').innerHTML = S.posts.length ? `<div class="rows">${S.posts.slice(0, 40).map(p => `
+    <div class="r">
+      <span class="main"><span class="t">${esc(p.title)}</span><span class="s">${tag(p.platform)}<span>${fmtDate(p.date)}</span></span></span>
+      <span class="end"><span class="mono" style="font-weight:600;display:block">${compact(p.views)}</span><span class="muted" style="font-size:.78rem;white-space:nowrap">${compact(p.likes)} likes</span></span>
+      <button type="button" data-del-post="${esc(p.id)}" aria-label="Delete post" style="min-height:40px;padding:0 10px;border-color:transparent;color:var(--ink-3);${S.confirm === p.id ? 'color:var(--bad);' : ''}">${S.confirm === p.id ? 'Delete' : '✕'}</button>
+    </div>`).join('')}</div>`
+    : `<div class="rows"><div class="empty">Log each video after you post it. It counts toward your challenge too.</div></div>`;
+}
+
+/* sheets */
+function openSheet(s){ blurActive(); S.sheet = s; S.confirm = null; render(); }
+function closeSheet(){ blurActive(); S.sheet = null; S.confirm = null; render(); }
+function renderSheet(){
+  const s = S.sheet; const view = $('sheet-view'), log = $('sheet-log');
+  $('scrim').hidden = !s; log.hidden = !s || s.type !== 'log'; view.hidden = !s || s.type === 'log';
+  if (!s || s.type === 'log') return;
+  const title = $('sv-title'), body = $('sv-body'), foot = $('sv-foot');
+  if (s.type === 'working'){
+    title.textContent = 'Writing your prompt…';
+    body.dataset.key = 'working';
+    if (!$('rc-live')){ body.innerHTML = `<div class="out" id="rc-live"></div>`; }
+    $('rc-live').textContent = S.busy.rcText || 'Claude is reading the video. This takes about a minute.';
+    foot.innerHTML = `<button type="button" class="primary" disabled>Working…</button>`;
+    return;
+  }
+  if (s.type === 'video'){
+    const v = S.videos.find(x => x.id === s.id); if (!v){ S.sheet = null; renderSheet(); return; }
+    title.textContent = v.title || 'Untitled video';
+    const key = 'video:' + v.id + ':' + (v.prompt||'').length + ':' + S.confirm;
+    if (body.dataset.key !== key){
+      body.dataset.key = key;
+      body.innerHTML = `<div class="out">${esc(v.prompt || '')}</div>
+        ${v.transcript ? `<details><summary>Show transcript</summary><div class="out muted">${esc(v.transcript)}</div></details>` : ''}
+        <div class="row" style="justify-content:space-between">${v.url ? `<a href="${esc(v.url)}" target="_blank" rel="noopener" style="font-size:.9rem">Open original ↗</a>` : '<span></span>'}
+          <button type="button" data-del-video="${esc(v.id)}" style="min-height:40px;border-color:transparent;color:var(--bad)">${S.confirm === v.id ? 'Tap again to delete' : 'Delete'}</button></div>`;
+      body.scrollTop = 0;
+    }
+    foot.innerHTML = `<button type="button" class="primary" data-copy="${esc(v.id)}">Copy prompt</button>`;
+    return;
+  }
+  if (s.type === 'analysis'){
+    title.textContent = "What's working";
+    const text = S.busy.an || (S.analysis && S.analysis.text) || '';
+    body.dataset.key = '';
+    body.innerHTML = text ? `<div class="md">${md(text)}</div>` : `<p class="muted">Claude reads your posts and tells you what to do more of.</p>`;
+    foot.innerHTML = `<button type="button" class="primary" id="an-go" ${S.busy.an || !S.sample ? 'disabled' : ''}>${S.busy.an ? 'Reading your stats…' : (S.analysis ? 'Analyze again' : 'Analyze my stats')}</button>`;
+  }
 }
 
 /* AI: recreate */
@@ -345,15 +407,16 @@ async function extractFrames(file, n){
 }
 function section(text, name){ const m = text.match(new RegExp('===' + name + '===\\s*([\\s\\S]*?)(?====[A-Z]+===|$)')); return m ? m[1].trim() : ''; }
 async function recreate(ev){
-  ev.preventDefault();
+  ev.preventDefault(); blurActive();
   if (!S.sample) return;
   const url = $('rc-url').value.trim(), text = $('rc-text').value.trim(), file = $('rc-file').files[0];
-  if (!text && !file){ msg('rc-msg', 'Paste the transcript or upload the video file. Claude can’t open links by itself.', true); return; }
+  if (!text && !file){ msg('rc-msg', 'Paste the transcript or upload the video. Claude can’t open links by itself.', true); return; }
   msg('rc-msg', '');
-  S.busy.rc = true; S.busy.rcText = ''; render();
+  S.busy.rc = true; S.busy.rcText = file ? 'Pulling frames from your video…' : ''; openSheet({type:'working'});
   let frames = [];
-  try { if (file){ if (!S.imgMax) throw {code:'images_unavailable'}; S.busy.rcText = 'Pulling frames from your video…'; render(); frames = await extractFrames(file, Math.min(10, S.imgMax)); S.busy.rcText = ''; render(); } }
-  catch(e){ S.busy = {}; render(); msg('rc-msg', e && e.code ? aiErr(e) : "Couldn't read that video file. Try an .mp4, or paste the transcript.", true); return; }
+  try { if (file){ if (!S.imgMax) throw {code:'images_unavailable'}; frames = await extractFrames(file, Math.min(10, S.imgMax)); } }
+  catch(e){ S.busy = {}; closeSheet(); msg('rc-msg', e && e.code ? aiErr(e) : "Couldn't read that video. Try an .mp4, or paste the transcript.", true); return; }
+  S.busy.rcText = ''; renderSheet();
   const prompt = `I want to recreate a short-form video that performed well, in my own style.
 
 ABOUT ME
@@ -366,7 +429,7 @@ ${frames.length ? `I attached ${frames.length} frames from the video in order, a
 
 Reply in exactly this format, with these three markers and nothing else:
 ===TITLE===
-a short name for this video, max 8 words
+a short name for this video, max 6 words
 ===TRANSCRIPT===
 a clean transcript with [m:ss] timestamps where you can tell
 ===PROMPT===
@@ -378,21 +441,23 @@ EDIT INSTRUCTIONS: the first 1.5 seconds, cut rhythm, zooms, captions style, B-r
 POSTING: a caption and 3 to 5 hashtags each for TikTok, Instagram Reels and YouTube Shorts.
 WHAT TO SEND BACK: a timecoded cut list, SRT captions and 3 cover text options.`;
   try {
-    const opts = {modelTier:'default', cache:false, onText: ({text}) => { const p = section(text, 'PROMPT'); S.busy.rcText = p || 'Writing your editor prompt…'; const o = $('rc-live'); if (o) o.textContent = S.busy.rcText; }};
+    const opts = {modelTier:'default', cache:false, onText: ({text}) => { S.busy.rcText = section(text, 'PROMPT') || 'Writing your editor prompt…'; const o = $('rc-live'); if (o) o.textContent = S.busy.rcText; }};
     if (frames.length) opts.images = frames.map(f => f.blob);
     const r = await S.sample(prompt, opts);
     const id = newId();
-    S.busy = {}; S.open = id;
-    putDoc('videos', id, {url, platform: detect(url), title: section(r.text, 'TITLE') || 'Untitled video', transcript: section(r.text, 'TRANSCRIPT') || text, prompt: section(r.text, 'PROMPT') || r.text, createdAt: Date.now()});
+    S.busy = {};
     for (const k of ['rc-url','rc-text','rc-file']) $(k).value = '';
-    toast('Editor prompt ready');
-  } catch(e){ S.busy = {}; render(); msg('rc-msg', aiErr(e), true); }
+    setFileLabel();
+    S.sheet = {type:'video', id};
+    putDoc('videos', id, {url, platform: detect(url), title: section(r.text, 'TITLE') || 'Untitled video', transcript: section(r.text, 'TRANSCRIPT') || text, prompt: section(r.text, 'PROMPT') || r.text, createdAt: Date.now()});
+  } catch(e){ S.busy = {}; closeSheet(); msg('rc-msg', aiErr(e), true); }
 }
+function setFileLabel(){ const f = $('rc-file').files[0]; $('rc-file-name').textContent = f ? f.name : 'Or upload the video'; $('rc-upload').classList.toggle('has', !!f); }
 
 /* AI: ideas */
 async function ideas(ev){
-  ev.preventDefault(); if (!S.sample) return;
-  S.busy.ideas = true; msg('id-msg', 'Thinking up ideas…'); render();
+  ev.preventDefault(); blurActive(); if (!S.sample) return;
+  S.busy.ideas = true; msg('id-msg', ''); render();
   const best = [...S.posts].sort((a,b) => num(b.views)-num(a.views)).slice(0, 6).map(p => `- "${p.title}" on ${PLAT[p.platform]?.name}: ${compact(p.views)} views`).join('\n');
   const news = $('id-news').value.trim();
   const prompt = `Pitch 8 short-form video ideas with a real shot at going viral for this creator.
@@ -403,14 +468,14 @@ ${ABOUT}
 THEIR BEST POSTS SO FAR
 ${best || 'none logged yet'}
 
-${news ? `WHAT'S HAPPENING NOW (pasted by the creator on ${today()}):\n${news.slice(0, 8000)}` : `Today is ${today()}. Mix startups, AI, tech news angles and skits. Prefer ideas that don't depend on very recent events.`}
+${news ? `FOCUS ON THIS (from the creator, ${today()}):\n${news.slice(0, 4000)}` : `Today is ${today()}. Mix startups, AI, tech news angles and skits. Prefer ideas that don't depend on very recent events.`}
 
 Each idea must be filmable by one person today. Lean on what already worked for them.
-Reply with only a JSON array of 8 objects: [{"hook":"the exact first line said on camera","title":"short working title","why":"one sentence on why it could pop"}]`;
+Reply with only a JSON array of 8 objects: [{"hook":"the exact first line said on camera","title":"short working title","why":"one short sentence on why it could pop"}]`;
   try {
     const r = await S.sample.json(prompt, {modelTier:'default', cache:false});
     const list = (Array.isArray(r) ? r : []).filter(x => x && x.hook).map(x => ({hook:String(x.hook), title:String(x.title||''), why:String(x.why||'')}));
-    S.ideas = list; putMeta('ideas', {list, at: Date.now()}); msg('id-msg', list.length ? '' : 'No ideas came back. Try again.', !list.length);
+    S.ideas = list; putMeta('ideas', {list, at: Date.now()}); if (!list.length) msg('id-msg', 'No ideas came back. Try again.', true);
   } catch(e){ msg('id-msg', aiErr(e), true); }
   S.busy.ideas = false; render();
 }
@@ -428,13 +493,13 @@ ${ABOUT}
 POSTS (date | platform | video | views | likes)
 ${rows}
 
-Reply in short Markdown with these ## sections, using "-" bullets, max 3 bullets each:
+Reply in short Markdown with these ## sections, using "-" bullets, max 3 short bullets each (it's read on a phone):
 ## What's working
 ## What's not
 ## Do this next week
 Be specific and cite their posts. If there's too little data to say something, say so in one line.`;
   try {
-    const r = await S.sample(prompt, {modelTier:'default', cache:false, onText: ({text}) => { S.busy.an = text; if (view === 'stats') renderStats(); }});
+    const r = await S.sample(prompt, {modelTier:'default', cache:false, onText: ({text}) => { S.busy.an = text; renderSheet(); }});
     S.busy.an = null; S.analysis = {text:r.text, at:Date.now()}; putMeta('analysis', S.analysis);
   } catch(e){ S.busy.an = null; toast(aiErr(e)); }
   render();
@@ -442,29 +507,36 @@ Be specific and cite their posts. If there's too little data to say something, s
 
 /* events */
 document.addEventListener('click', ev => {
-  const t = ev.target.closest('button, [data-open]'); if (!t) return; const d = t.dataset;
-  if (S.confirm && !d.delVideo && !d.delPost) S.confirm = null;
+  if (ev.target.id === 'scrim'){ if (!S.busy.rc) closeSheet(); return; }
+  const t = ev.target.closest('button'); if (!t) return; const d = t.dataset;
+  if (S.confirm && !d.delVideo && !d.delPost){ S.confirm = null; render(); }
+  if (d.close !== undefined){ closeSheet(); return; }
   if (t.id === 'ch-start'){ S.start = today(); render(); saveChallenge(); toast('Day 1. Go post.'); return; }
   if (d.dayPlat){ const t0 = today(), p = d.dayPlat;
-    if (S.posts.some(x => x.date === t0 && x.platform === p) && !(S.days[t0]||{})[p]){ toast('Already counted from a post you logged'); return; }
+    if (S.posts.some(x => x.date === t0 && x.platform === p) && !(S.days[t0]||{})[p]){ toast('Counted from a post you logged'); return; }
     const cur = {...(S.days[t0] || {})}; cur[p] = !cur[p]; S.days = {...S.days, [t0]: cur}; render(); saveChallenge(); return; }
-  if (d.open){ S.open = S.open === d.open ? null : d.open; render(); return; }
+  if (d.openVideo){ openSheet({type:'video', id:d.openVideo}); return; }
   if (d.copy){ const v = S.videos.find(x => x.id === d.copy); if (v) copy(v.prompt || '', t); return; }
   if (d.copyIdea){ const i = S.ideas[Number(d.copyIdea)]; if (i) copy(`${i.hook}\n\n${i.title}: ${i.why}`, t); return; }
-  if (d.delVideo){ if (S.confirm === d.delVideo){ S.confirm = null; delDoc('videos', d.delVideo); } else { S.confirm = d.delVideo; render(); } return; }
+  if (d.delVideo){ if (S.confirm === d.delVideo){ S.confirm = null; S.sheet = null; delDoc('videos', d.delVideo); toast('Deleted'); } else { S.confirm = d.delVideo; renderSheet(); } return; }
   if (d.delPost){ if (S.confirm === d.delPost){ S.confirm = null; delDoc('posts', d.delPost); } else { S.confirm = d.delPost; render(); } return; }
+  if (d.p){ S.logPlat = d.p; document.querySelectorAll('#lg-plat button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.p === d.p))); return; }
+  if (t.id === 'log-open'){ openSheet({type:'log'}); return; }
+  if (t.id === 'an-open'){ openSheet({type:'analysis'}); if (!S.analysis && !S.busy.an) analyze(); return; }
   if (t.id === 'an-go'){ analyze(); return; }
 });
-document.addEventListener('keydown', ev => { if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.dataset && ev.target.dataset.open){ ev.preventDefault(); ev.target.click(); } });
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && S.sheet && !S.busy.rc) closeSheet(); });
+$('rc-file').addEventListener('change', setFileLabel);
 $('rc-form').addEventListener('submit', recreate);
 $('id-form').addEventListener('submit', ideas);
-$('st-form').addEventListener('submit', ev => {
+$('sheet-log').addEventListener('submit', ev => {
   ev.preventDefault();
-  const title = $('st-title').value.trim(), views = $('st-views').value;
+  const title = $('lg-title').value.trim(), views = $('lg-views').value;
   if (!title || views === ''){ toast('Add the video name and views'); return; }
-  putDoc('posts', newId(), {date: today(), platform: $('st-plat').value, title, views: num(views), likes: num($('st-likes').value), createdAt: Date.now()});
-  for (const k of ['st-title','st-views','st-likes']) $(k).value = '';
-  toast('Post logged');
+  blurActive();
+  putDoc('posts', newId(), {date: today(), platform: S.logPlat, title, views: num(views), likes: num($('lg-likes').value), createdAt: Date.now()});
+  for (const k of ['lg-title','lg-views','lg-likes']) $(k).value = '';
+  closeSheet(); toast('Post logged');
 });
 
 boot();
