@@ -8,14 +8,12 @@ One dashboard for a short-form creator posting the same videos to **TikTok, Inst
 
 ## What's in it
 
-| Tab | What it does |
-|---|---|
-| **Today** | Challenge day counter, today's posting checklist, last 7 days vs the 7 before, what to film next, your best recent post. |
-| **Recreate** | Paste a video link plus its transcript, or upload the video file. Claude reads frames and on-screen captions, breaks down the hook, beats, pacing and edit style, rewrites it as a script in your voice, and writes a **prompt for your AI editor chat**. Videos move through stages: To script, To film, To post, Posted. |
-| **Ideas** | Claude pitches 8 ideas at a time, based on your best and worst posts and the videos you saved. Paste today's headlines for timely news angles. Save ideas, then "Script it" to get a script, a shot list and an editor prompt. |
-| **Analytics** | Log posts by hand, or paste exports or screenshots and let Claude pull out the numbers. See views by platform, median views per pillar, engagement rate, and viral hits (posts at 3× or more of your typical views). "Analyze my performance" gives you what's working, your viral formula and 3 experiments for next week. |
-| **90-day challenge** | A 90-square grid. A day counts when you post on 1, 2 or all 3 platforms (you choose). Posts you log tick themselves off. Shows streaks. |
-| **Brand kit** | Your voice, audience, pillars, CTA and editing preferences. Every AI prompt uses it. Also builds a one-time **editor setup prompt** to paste into your editor chat. |
+Kept lean on purpose. More features get added later as needed.
+
+- **90-day challenge** (always at the top): day counter, streak, and three buttons to tick where you posted today. A day counts when you post on at least one platform.
+- **Recreate:** paste a video link plus its transcript, or upload the video file. You get back one prompt to paste into your AI editor chat with your footage. It covers why the original works, your version of the script, edit instructions and captions for each platform.
+- **Ideas:** one button gives you 8 ideas, each with the first line to say on camera. You can paste news first for timely ideas.
+- **Stats:** log each post (video, platform, views, likes), see this week's numbers, and ask Claude what's working.
 
 ## Getting transcripts
 
@@ -35,7 +33,6 @@ It prints a timestamped transcript. Paste it into the Recreate tab.
 
 ## Workflow
 
-1. Fill in the **Brand kit**, copy the editor setup prompt, and paste it into your editor Claude chat once.
-2. Start the **90-day challenge**.
-3. Every day: pick a reference in **Recreate** or an idea in **Ideas**, film the script, paste the editor prompt plus your footage into the editor chat, post, then log the post in **Analytics**.
-4. Weekly: press **Analyze my performance** and act on the 3 experiments.
+1. Start the challenge.
+2. Every day: recreate a video or pick an idea, film it, paste the editor prompt plus your footage into your editor chat, post it.
+3. Log the post in Stats. Once a week, press **Analyze my stats**.
