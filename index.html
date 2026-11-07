@@ -1,0 +1,1523 @@
+<title>Creator Control Room</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a film-slate header strip + tab rail, then one working surface per view (edit-bay graphite, REC red only for "live" and day markers). */
+:root{
+  --bg:#f2f3f5; --surface:#ffffff; --surface-2:#e9ebef; --ink:#14161a; --ink-2:#464b55; --ink-3:#6b717c; --line:#d7dae1; --grid:#e7e9ed;
+  --accent:#d63a2c; --accent-soft:#fbe3e0; --on-accent:#ffffff; --focus:#2a78d6;
+  --s-yt:#2a78d6; --s-ig:#eb6834; --s-tt:#1baf7a;
+  --good:#0a7d0a; --good-soft:#e2f3e2; --warn:#9a6700; --warn-soft:#fbf0d6; --bad:#c53030; --bad-soft:#fbe4e4;
+  --shadow:0 1px 2px rgba(20,22,26,.06),0 4px 16px rgba(20,22,26,.05);
+  --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101215; --surface:#181b20; --surface-2:#21252b; --ink:#eef0f3; --ink-2:#b6bcc6; --ink-3:#8a919c; --line:#2d3239; --grid:#252a30;
+  --accent:#ff5b4d; --accent-soft:#3b1f1c; --on-accent:#16080a; --focus:#5598e7;
+  --s-yt:#3987e5; --s-ig:#d95926; --s-tt:#199e70;
+  --good:#3fbf3f; --good-soft:#16301a; --warn:#e0a526; --warn-soft:#352a12; --bad:#f06a6a; --bad-soft:#3a1c1c;
+  --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#101215; --surface:#181b20; --surface-2:#21252b; --ink:#eef0f3; --ink-2:#b6bcc6; --ink-3:#8a919c; --line:#2d3239; --grid:#252a30;
+  --accent:#ff5b4d; --accent-soft:#3b1f1c; --on-accent:#16080a; --focus:#5598e7;
+  --s-yt:#3987e5; --s-ig:#d95926; --s-tt:#199e70;
+  --good:#3fbf3f; --good-soft:#16301a; --warn:#e0a526; --warn-soft:#352a12; --bad:#f06a6a; --bad-soft:#3a1c1c;
+  --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+h1,h2,h3,h4{font-family:var(--f-display);font-stretch:112%;line-height:1.1;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font-size:1.5rem;font-weight:800}
+h3{font-size:1.05rem;font-weight:750}
+h4{font-size:.95rem;font-weight:700}
+p{margin:0}
+a{color:var(--focus)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.muted{color:var(--ink-3)}
+.small{font-size:.85rem}
+.wrap{max-width:1200px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* header slate */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block:12px}
+.brand{display:flex;flex-direction:column;min-width:0}
+.brand h1{font-size:1.25rem;font-weight:900;font-stretch:125%;letter-spacing:-.02em;text-transform:uppercase}
+.slate{display:flex;align-items:stretch;margin-left:auto;border:1.5px solid var(--ink);border-radius:6px;overflow:hidden;font-family:var(--f-mono);font-size:.78rem}
+.slate>div{padding:5px 10px;display:flex;flex-direction:column;justify-content:center;border-left:1.5px solid var(--ink)}
+.slate>div:first-child{border-left:0}
+.slate .k{font-size:.6rem;letter-spacing:.14em;color:var(--ink-3);text-transform:uppercase}
+.slate .v{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rec{display:inline-flex;align-items:center;gap:6px;color:var(--accent);font-weight:600}
+.rec i{width:9px;height:9px;border-radius:50%;background:var(--accent);display:inline-block}
+.rec.live i{animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.rec.live i{animation:none}}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin-bottom:-1px}
+.tabs::-webkit-scrollbar{display:none}
+.tabs a{flex:none;text-decoration:none;color:var(--ink-2);font-weight:600;font-size:.92rem;padding:10px 14px;border-bottom:2.5px solid transparent;border-radius:6px 6px 0 0}
+.tabs a:hover{color:var(--ink);background:var(--surface-2)}
+.tabs a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--accent)}
+.status{font-family:var(--f-mono);font-size:.7rem;color:var(--ink-3);white-space:nowrap}
+.status b{font-weight:600}
+.status.warn b{color:var(--warn)}
+
+main{padding-block:24px 64px}
+.view{display:flex;flex-direction:column;gap:20px}
+.view-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.view-head p{color:var(--ink-2);max-width:62ch}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;box-shadow:var(--shadow);min-width:0}
+.card-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.cols{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:20px;align-items:start}
+.cols-even{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}
+.cols-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;align-items:start}
+@media (max-width:900px){.cols,.cols-even,.cols-3{grid-template-columns:minmax(0,1fr)}}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:560px){.grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* forms */
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.8rem;font-weight:600;color:var(--ink-2);min-width:0}
+input[type=text],input[type=url],input[type=number],input[type=date],select,textarea{font:inherit;font-size:.92rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:90px;line-height:1.45}
+textarea.tall{min-height:180px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--focus);outline-offset:0;border-color:transparent}
+.hint{font-size:.78rem;color:var(--ink-3);font-weight:400}
+button,.btn{font:inherit;font-size:.88rem;font-weight:600;border-radius:7px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-decoration:none;white-space:nowrap}
+button:hover,.btn:hover{background:var(--surface-2)}
+button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button.primary:hover{opacity:.88;background:var(--ink)}
+button.ai::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--accent);transform:rotate(45deg)}
+button.ghost{border-color:transparent;background:transparent;color:var(--ink-2);padding:6px 8px}
+button.ghost:hover{background:var(--surface-2);color:var(--ink)}
+button.danger{color:var(--bad)}
+button.sm{font-size:.8rem;padding:5px 10px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;border-radius:0;border-left:1px solid var(--line);font-size:.8rem;padding:6px 11px}
+.seg button:first-child{border-left:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+
+/* chips */
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--surface-2);color:var(--ink-2);white-space:nowrap}
+.chip .dot{width:7px;height:7px;border-radius:50%}
+.chip.example{background:var(--warn-soft);color:var(--warn)}
+.chip.good{background:var(--good-soft);color:var(--good)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.bad{background:var(--bad-soft);color:var(--bad)}
+.chip.rec{background:var(--accent-soft);color:var(--accent)}
+.plat{display:inline-flex;align-items:center;gap:5px;font-family:var(--f-mono);font-size:.72rem;font-weight:600}
+.plat i{width:8px;height:8px;border-radius:2px;display:inline-block}
+
+/* lists */
+.list{display:flex;flex-direction:column}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:12px 4px;border-top:1px solid var(--line);align-items:center}
+.item:first-child{border-top:0}
+.item.clickable{cursor:pointer;border-radius:6px}
+.item.clickable:hover{background:var(--surface-2)}
+.item.sel{background:var(--accent-soft)}
+.item .t{font-weight:600;overflow-wrap:anywhere}
+.item .meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:.78rem;color:var(--ink-3);grid-column:1/-1}
+.empty{border:1.5px dashed var(--line);border-radius:10px;padding:22px;text-align:center;color:var(--ink-3);font-size:.9rem}
+.empty b{color:var(--ink-2);display:block;margin-bottom:4px;font-family:var(--f-display);font-stretch:112%}
+
+/* stat tiles */
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.tile .n{font-family:var(--f-display);font-stretch:118%;font-weight:800;font-size:1.7rem;font-variant-numeric:tabular-nums;line-height:1.1;margin-top:4px}
+.tile .d{font-size:.76rem;margin-top:2px;font-variant-numeric:tabular-nums}
+.up{color:var(--good)} .down{color:var(--bad)}
+
+/* text output */
+.out{white-space:pre-wrap;font-size:.9rem;line-height:1.55;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:14px;max-height:520px;overflow:auto;overflow-wrap:anywhere}
+.out.mono{font-size:.8rem}
+.md{font-size:.92rem;line-height:1.6;max-width:72ch}
+.md h4{margin:14px 0 4px}
+.md h4:first-child{margin-top:0}
+.md ul{margin:4px 0 8px;padding-left:20px}
+.md p{margin:4px 0}
+.note{font-size:.82rem;color:var(--ink-2);background:var(--surface-2);border-radius:8px;padding:10px 12px}
+.note.err{background:var(--bad-soft);color:var(--bad)}
+.note.ok{background:var(--good-soft);color:var(--good)}
+details{border-top:1px solid var(--line);padding-top:10px}
+details>summary{cursor:pointer;font-weight:700;font-family:var(--f-display);font-stretch:112%;list-style:none;display:flex;align-items:center;gap:8px}
+details>summary::before{content:"+";font-family:var(--f-mono);color:var(--ink-3);width:12px}
+details[open]>summary::before{content:"–"}
+details>summary::-webkit-details-marker{display:none}
+details>.body{padding-top:10px;display:flex;flex-direction:column;gap:10px}
+
+/* beats timeline */
+.beats{display:flex;flex-direction:column;gap:0;border-left:2px solid var(--line);margin-left:6px}
+.beat{display:grid;grid-template-columns:64px minmax(0,1fr);gap:10px;padding:6px 0 6px 12px;position:relative}
+.beat::before{content:"";position:absolute;left:-6px;top:12px;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--ink-3)}
+.beat:first-child::before{border-color:var(--accent);background:var(--accent)}
+.beat .tc{font-family:var(--f-mono);font-size:.75rem;color:var(--ink-3);padding-top:2px}
+.beat b{font-size:.85rem}
+.frames{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.frames figure{margin:0;flex:none;width:64px}
+.frames img{width:64px;height:100px;object-fit:cover;border-radius:5px;border:1px solid var(--line);display:block}
+.frames figcaption{font-family:var(--f-mono);font-size:.62rem;color:var(--ink-3);text-align:center}
+
+/* charts */
+.chart{position:relative;width:100%;min-width:0}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{font-family:var(--f-mono);font-size:10.5px;fill:var(--ink-3)}
+.chart .lbl{fill:var(--ink-2);font-weight:600}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:8px;padding:8px 10px;font-size:.78rem;min-width:140px;z-index:3}
+.tip .r{display:flex;justify-content:space-between;gap:14px;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.78rem;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:14px;height:3px;border-radius:2px;display:inline-block}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:.84rem}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600;background:var(--surface-2)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td.title{white-space:normal;min-width:180px;max-width:320px}
+tr:last-child td{border-bottom:0}
+
+/* challenge */
+.days{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:5px}
+.day{aspect-ratio:1;max-width:100%;border:1px solid var(--line);border-radius:7px;background:var(--surface);display:flex;flex-direction:column;justify-content:space-between;padding:4px;cursor:pointer;font-family:var(--f-mono);font-size:.68rem;color:var(--ink-3);position:relative;min-width:0}
+.day:hover{border-color:var(--ink-3)}
+.day.future{background:transparent;border-style:dashed;cursor:default}
+.day.done{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.day.miss{background:repeating-linear-gradient(135deg,transparent 0 4px,var(--surface-2) 4px 5px)}
+.day.today{outline:2px solid var(--ink);outline-offset:1px}
+.day.sel{outline:2px solid var(--focus);outline-offset:1px}
+.pips{display:flex;gap:2px}
+.pips i{flex:1;height:5px;border-radius:2px;background:var(--surface-2)}
+.prog{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);cursor:pointer;font-weight:600;width:100%}
+.toggle[aria-pressed="true"]{border-color:currentColor}
+.toggle .box{width:20px;height:20px;border-radius:5px;border:2px solid var(--line);display:grid;place-items:center;font-size:.75rem;color:var(--bg)}
+.toggle[aria-pressed="true"] .box{background:var(--ink);border-color:var(--ink)}
+.bigday{font-family:var(--f-display);font-stretch:125%;font-weight:900;font-size:3rem;line-height:.95;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.bigday small{font-size:1.1rem;color:var(--ink-3);font-weight:700;letter-spacing:0}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:.85rem;font-weight:600;z-index:20;box-shadow:var(--shadow)}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="top-row">
+      <div class="brand">
+        <span class="eyebrow" id="hdr-handle">Startup · AI · News · Skits</span>
+        <h1 id="hdr-name">Creator Control Room</h1>
+      </div>
+      <div class="slate" aria-label="Challenge status">
+        <div><span class="rec" id="hdr-rec"><i></i>REC</span></div>
+        <div><span class="k">Day</span><span class="v" id="hdr-day">—/090</span></div>
+        <div><span class="k">Streak</span><span class="v" id="hdr-streak">0</span></div>
+        <div><span class="k">Today</span><span class="v" id="hdr-today">0/3</span></div>
+      </div>
+    </div>
+    <div class="row" style="justify-content:space-between;gap:8px">
+      <nav class="tabs" aria-label="Sections">
+        <a href="#today" data-tab="today">Today</a>
+        <a href="#recreate" data-tab="recreate">Recreate</a>
+        <a href="#ideas" data-tab="ideas">Ideas</a>
+        <a href="#analytics" data-tab="analytics">Analytics</a>
+        <a href="#challenge" data-tab="challenge">90-day challenge</a>
+        <a href="#brand" data-tab="brand">Brand kit</a>
+      </nav>
+      <span class="status" id="save-status">Connecting…</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- TODAY -->
+<section class="view" id="v-today" data-view="today">
+  <div class="view-head">
+    <div class="stack" style="gap:6px">
+      <span class="eyebrow" id="today-date"></span>
+      <h2>What to ship today</h2>
+    </div>
+  </div>
+  <div class="cols">
+    <div class="card" id="today-slate"></div>
+    <div class="stack" style="gap:20px">
+      <div class="grid-4" id="today-kpis"></div>
+      <div class="cols-even">
+        <div class="card"><div class="card-head"><h3>Film next</h3><a href="#recreate" class="small">Recreate queue</a></div><div id="today-next"></div></div>
+        <div class="card"><div class="card-head"><h3>Saved ideas</h3><a href="#ideas" class="small">Find more</a></div><div id="today-ideas"></div></div>
+      </div>
+      <div class="card"><div class="card-head"><h3>Your best recent post</h3><a href="#analytics" class="small">All analytics</a></div><div id="today-best"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- RECREATE -->
+<section class="view" id="v-recreate" data-view="recreate" hidden>
+  <div class="view-head">
+    <div class="stack" style="gap:6px">
+      <span class="eyebrow">Reference library</span>
+      <h2>Recreate a video</h2>
+      <p>Paste a video you want to remake. Claude transcribes what it can, breaks down why it works, rewrites it in your voice, and writes the prompt for your editor chat.</p>
+    </div>
+  </div>
+  <div class="cols">
+    <form class="card stack" id="rc-form" autocomplete="off">
+      <h3>Add a reference video</h3>
+      <label class="f">Video link
+        <input type="url" id="rc-url" placeholder="https://www.tiktok.com/@creator/video/…">
+        <span class="hint" id="rc-url-hint">TikTok, Instagram Reels or YouTube.</span>
+      </label>
+      <div class="grid-2">
+        <label class="f">What is it?<input type="text" id="rc-title" placeholder="e.g. 'YC rejected me' story"></label>
+        <label class="f">Creator<input type="text" id="rc-creator" placeholder="@handle"></label>
+      </div>
+      <label class="f">Transcript or captions
+        <textarea id="rc-transcript" class="tall" placeholder="Paste the transcript here. Timestamps are fine, Claude cleans them up."></textarea>
+        <span class="hint">Leave this empty if you upload the video file below. Claude reads the on-screen captions from it instead.</span>
+      </label>
+      <label class="f">Video file (optional)
+        <input type="file" id="rc-file" accept="video/*">
+        <span class="hint">Claude looks at frames from your copy of the video: the hook shot, the on-screen captions, the edit style. The file stays in your browser and isn't saved.</span>
+      </label>
+      <div id="rc-frames" hidden></div>
+      <label class="f">Notes for yourself<input type="text" id="rc-notes" placeholder="What made you want to recreate this?"></label>
+      <div class="row">
+        <button type="submit" class="primary ai" id="rc-go">Save &amp; break it down</button>
+        <button type="button" id="rc-save-only">Save only</button>
+      </div>
+      <div id="rc-msg"></div>
+      <details>
+        <summary>How to get a transcript fast</summary>
+        <div class="body small">
+          <p><b>YouTube:</b> under the video, open <i>…more</i> then <i>Show transcript</i>, and copy it.</p>
+          <p><b>TikTok / Reels:</b> most short videos have captions burned in. Save the video (or screen-record it) and upload the file above. Claude reads the captions frame by frame.</p>
+          <p><b>Word-for-word audio transcript:</b> run <span class="mono">python tools/transcribe.py &lt;link&gt;</span> from this project's repo. It downloads the audio and runs Whisper on your computer. Paste what it prints into the box above.</p>
+        </div>
+      </details>
+    </form>
+    <div class="stack" style="gap:20px">
+      <div class="card">
+        <div class="card-head"><h3>Library</h3>
+          <div class="seg" id="rc-filter" role="group" aria-label="Filter by stage">
+            <button type="button" data-f="all" aria-pressed="true">All</button>
+            <button type="button" data-f="saved" aria-pressed="false">To script</button>
+            <button type="button" data-f="scripted" aria-pressed="false">To film</button>
+            <button type="button" data-f="filmed" aria-pressed="false">To post</button>
+            <button type="button" data-f="posted" aria-pressed="false">Posted</button>
+          </div>
+        </div>
+        <div id="rc-list" class="list"></div>
+      </div>
+      <div class="card" id="rc-detail"></div>
+    </div>
+  </div>
+</section>
+
+<!-- IDEAS -->
+<section class="view" id="v-ideas" data-view="ideas" hidden>
+  <div class="view-head">
+    <div class="stack" style="gap:6px">
+      <span class="eyebrow">Idea engine</span>
+      <h2>Find your next video</h2>
+      <p>Claude pitches ideas built on your best-performing posts and the videos you saved to recreate. It can't browse the web from here, so paste today's headlines, tweets or launch posts for timely news ideas.</p>
+    </div>
+  </div>
+  <div class="cols">
+    <form class="card stack" id="id-form" autocomplete="off">
+      <h3>Pitch me ideas</h3>
+      <div class="grid-2">
+        <label class="f">Pillar<select id="id-pillar"></select></label>
+        <label class="f">Format
+          <select id="id-format">
+            <option value="any">Any format</option>
+            <option>Talking head</option><option>Skit</option><option>News breakdown</option>
+            <option>Green screen</option><option>Tutorial / demo</option><option>Story time</option><option>Hot take</option><option>Day in the life</option>
+          </select>
+        </label>
+      </div>
+      <label class="f">What's happening right now (optional)
+        <textarea id="id-news" placeholder="Paste headlines, tweets, product launches, funding news… one per line."></textarea>
+      </label>
+      <label class="f">Anything else?<input type="text" id="id-extra" placeholder="e.g. something I can film at my desk in 20 minutes"></label>
+      <div class="row">
+        <button type="submit" class="primary ai" id="id-go">Pitch 8 ideas</button>
+        <button type="button" class="ghost" id="id-stop" hidden>Stop</button>
+      </div>
+      <div id="id-msg"></div>
+    </form>
+    <div class="stack" style="gap:20px">
+      <div class="card" id="id-results-card" hidden>
+        <div class="card-head"><h3>Fresh pitches</h3><span class="small muted">Save the ones you'd film</span></div>
+        <div id="id-results" class="list"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Saved ideas</h3>
+          <div class="seg" id="id-filter" role="group" aria-label="Filter ideas">
+            <button type="button" data-f="open" aria-pressed="true">Open</button>
+            <button type="button" data-f="used" aria-pressed="false">Used</button>
+          </div>
+        </div>
+        <div id="id-saved" class="list"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ANALYTICS -->
+<section class="view" id="v-analytics" data-view="analytics" hidden>
+  <div class="view-head">
+    <div class="stack" style="gap:6px">
+      <span class="eyebrow">Performance</span>
+      <h2>How your videos are doing</h2>
+    </div>
+    <div class="row">
+      <div class="seg" id="an-period" role="group" aria-label="Time range">
+        <button type="button" data-p="30" aria-pressed="false">30 days</button>
+        <button type="button" data-p="90" aria-pressed="true">90 days</button>
+        <button type="button" data-p="all" aria-pressed="false">All time</button>
+      </div>
+      <div class="seg" id="an-plat" role="group" aria-label="Platform">
+        <button type="button" data-pl="all" aria-pressed="true">All</button>
+        <button type="button" data-pl="tt" aria-pressed="false">TikTok</button>
+        <button type="button" data-pl="ig" aria-pressed="false">Instagram</button>
+        <button type="button" data-pl="yt" aria-pressed="false">YouTube</button>
+      </div>
+    </div>
+  </div>
+  <div class="grid-4" id="an-kpis" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))"></div>
+  <div class="cols">
+    <div class="card"><div class="card-head"><h3>Views by platform</h3><div class="legend" id="an-legend"></div></div><div class="chart" id="an-line"></div></div>
+    <div class="card"><div class="card-head"><h3>Median views by pillar</h3><span class="small muted">Which topics carry</span></div><div class="chart" id="an-bars"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>Claude's read on your numbers</h3>
+      <div class="row"><span class="small muted" id="an-ai-when"></span><button type="button" class="primary ai" id="an-ai-go">Analyze my performance</button><button type="button" class="ghost" id="an-ai-stop" hidden>Stop</button></div>
+    </div>
+    <div id="an-ai-out"></div>
+  </div>
+  <div class="cols-even">
+    <form class="card stack" id="po-form" autocomplete="off">
+      <h3>Log a post</h3>
+      <div class="grid-2">
+        <label class="f">Date<input type="date" id="po-date"></label>
+        <label class="f">Platform<select id="po-plat"><option value="tt">TikTok</option><option value="ig">Instagram</option><option value="yt">YouTube</option></select></label>
+      </div>
+      <label class="f">Title or hook<input type="text" id="po-title" placeholder="What the video was"></label>
+      <div class="grid-2">
+        <label class="f">Pillar<select id="po-pillar"></select></label>
+        <label class="f">Format<input type="text" id="po-format" placeholder="Talking head, skit…"></label>
+      </div>
+      <div class="grid-4">
+        <label class="f">Views<input type="number" min="0" id="po-views"></label>
+        <label class="f">Likes<input type="number" min="0" id="po-likes"></label>
+        <label class="f">Comments<input type="number" min="0" id="po-comments"></label>
+        <label class="f">Shares<input type="number" min="0" id="po-shares"></label>
+        <label class="f">Saves<input type="number" min="0" id="po-saves"></label>
+        <label class="f">New follows<input type="number" min="0" id="po-follows"></label>
+        <label class="f">Avg watch %<input type="number" min="0" max="100" id="po-watch"></label>
+        <label class="f">Link<input type="url" id="po-url" placeholder="optional"></label>
+      </div>
+      <div class="row"><button type="submit" class="primary">Save post</button><span id="po-msg" class="small"></span></div>
+    </form>
+    <form class="card stack" id="im-form" autocomplete="off">
+      <h3>Import from your analytics</h3>
+      <p class="small muted">Paste rows from YouTube Studio, TikTok or Instagram exports, or a spreadsheet. You can also add screenshots of your analytics screens. Claude pulls out each post's numbers for you to check before saving.</p>
+      <label class="f">Pasted data<textarea id="im-text" placeholder="Title, date, views, likes…"></textarea></label>
+      <div class="grid-2">
+        <label class="f">Screenshots<input type="file" id="im-imgs" accept="image/png,image/jpeg,image/webp" multiple></label>
+        <label class="f">If a row has no platform<select id="im-plat"><option value="tt">TikTok</option><option value="ig">Instagram</option><option value="yt">YouTube</option></select></label>
+      </div>
+      <div class="row"><button type="submit" class="ai" id="im-go">Read my data</button></div>
+      <div id="im-out"></div>
+    </form>
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>Every post</h3><span class="small muted">"vs typical" compares a post with your median on that platform. 3× or more counts as a viral hit.</span></div>
+    <div id="an-table"></div>
+  </div>
+</section>
+
+<!-- CHALLENGE -->
+<section class="view" id="v-challenge" data-view="challenge" hidden>
+  <div class="view-head">
+    <div class="stack" style="gap:6px">
+      <span class="eyebrow">90 days straight</span>
+      <h2>The posting challenge</h2>
+      <p>Post every day for 90 days. A day counts when you hit your daily goal. Posts you log in Analytics tick themselves off here.</p>
+    </div>
+  </div>
+  <div class="cols">
+    <div class="stack" style="gap:20px">
+      <div class="card stack" id="ch-stats"></div>
+      <form class="card stack" id="ch-form" autocomplete="off">
+        <h3>Rules</h3>
+        <div class="grid-2">
+          <label class="f">Start date<input type="date" id="ch-start"></label>
+          <label class="f">A day counts when I post on
+            <select id="ch-goal"><option value="1">1 platform</option><option value="2">2 platforms</option><option value="3">All 3 platforms</option></select>
+          </label>
+        </div>
+        <div class="row"><button type="submit" class="primary">Save rules</button><span id="ch-msg" class="small"></span></div>
+      </form>
+    </div>
+    <div class="stack" style="gap:20px">
+      <div class="card">
+        <div class="card-head"><h3>Day by day</h3>
+          <div class="legend">
+            <span><i style="background:var(--s-tt)"></i>TikTok</span><span><i style="background:var(--s-ig)"></i>Instagram</span><span><i style="background:var(--s-yt)"></i>YouTube</span>
+          </div>
+        </div>
+        <div class="days" id="ch-grid"></div>
+      </div>
+      <div class="card" id="ch-day"></div>
+    </div>
+  </div>
+</section>
+
+<!-- BRAND -->
+<section class="view" id="v-brand" data-view="brand" hidden>
+  <div class="view-head">
+    <div class="stack" style="gap:6px">
+      <span class="eyebrow">Brand kit</span>
+      <h2>Who you are on camera</h2>
+      <p>Every idea, script and editor prompt uses this. The more specific you are, the more the output sounds like you.</p>
+    </div>
+  </div>
+  <div class="cols-even">
+    <form class="card stack" id="br-form" autocomplete="off">
+      <div class="grid-2">
+        <label class="f">Your name<input type="text" id="br-name"></label>
+        <label class="f">Handle<input type="text" id="br-handle" placeholder="@you"></label>
+      </div>
+      <label class="f">Who you make videos for<input type="text" id="br-audience"></label>
+      <label class="f">Content pillars<input type="text" id="br-pillars"><span class="hint">Separate with commas.</span></label>
+      <label class="f">Your voice and style<textarea id="br-voice" placeholder="e.g. fast, blunt, a bit self-deprecating. I talk to camera from my desk. Never use 'game-changer'. Skits are absurd office humour."></textarea></label>
+      <label class="f">What you're building toward<input type="text" id="br-goal" placeholder="e.g. 100K followers, launch a newsletter, land sponsors"></label>
+      <label class="f">Your usual call to action<input type="text" id="br-cta" placeholder="e.g. Follow for daily AI news that actually matters"></label>
+      <label class="f">How your editor works<textarea id="br-editor" placeholder="e.g. My editor Claude writes CapCut instructions. Captions: bold white, yellow highlight on key words, 3 words per line. Fonts: …"></textarea></label>
+      <div class="row"><button type="submit" class="primary">Save brand kit</button><span id="br-msg" class="small"></span></div>
+    </form>
+    <div class="card stack">
+      <div class="card-head" style="margin-bottom:0"><h3>Editor setup prompt</h3><button type="button" id="br-copy">Copy</button></div>
+      <p class="small muted">Paste this once into your editor chat (or its project instructions). After that, each recreate brief you send it only needs the video-specific prompt.</p>
+      <div class="out" id="br-prompt"></div>
+    </div>
+  </div>
+</section>
+
+</main>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(() => {
+'use strict';
+const PLATS = [
+  {id:'tt', name:'TikTok', color:'var(--s-tt)'},
+  {id:'ig', name:'Instagram', color:'var(--s-ig)'},
+  {id:'yt', name:'YouTube', color:'var(--s-yt)'},
+];
+const PLAT = Object.fromEntries(PLATS.map(p => [p.id, p]));
+const STAGES = [
+  {id:'saved', name:'To script'}, {id:'scripted', name:'To film'}, {id:'filmed', name:'To post'}, {id:'posted', name:'Posted'},
+];
+const DEFAULT_PROFILE = {
+  name:'', handle:'', audience:'Founders, builders and curious people who want to keep up with AI and startups',
+  pillars:['Startups','AI','News','Skits','General'], voice:'', goal:'Build a personal brand and an audience that shows up for every video',
+  cta:'', editor:'', challengeStart:'', dailyGoal:3,
+};
+const CHALLENGE_DAYS = 90;
+
+const S = {
+  db:null, sample:null, imgMax:0, dbState:'connecting',
+  profile:{...DEFAULT_PROFILE}, videos:[], posts:[], ideas:[], days:{}, analysis:null,
+  view:'today', rcFilter:'all', idFilter:'open', selVideo:null, selDay:null,
+  period:'90', plat:'all', ideaResults:[], frames:null, importRows:null,
+  busy:{},
+};
+
+/* ---------- utils ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const num = v => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+const pad = n => String(n).padStart(2, '0');
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const todayIso = () => iso(new Date());
+const parseIso = s => { const [y,m,d] = String(s).split('-').map(Number); return new Date(y, (m||1)-1, d||1); };
+const addDays = (s, n) => { const d = parseIso(s); d.setDate(d.getDate()+n); return iso(d); };
+const daysBetween = (a, b) => Math.round((parseIso(b) - parseIso(a)) / 86400000);
+const fmtDate = s => s ? parseIso(s).toLocaleDateString(undefined, {month:'short', day:'numeric'}) : '';
+const compact = n => { n = num(n); const a = Math.abs(n);
+  if (a >= 1e6) return (n/1e6).toFixed(a >= 1e7 ? 0 : 1).replace(/\.0$/,'') + 'M';
+  if (a >= 1e3) return (n/1e3).toFixed(a >= 1e4 ? 0 : 1).replace(/\.0$/,'') + 'K';
+  return String(Math.round(n)); };
+const pct = n => (n*100).toFixed(n < 0.1 ? 1 : 0) + '%';
+const median = arr => { const a = arr.filter(Number.isFinite).sort((x,y)=>x-y); if (!a.length) return 0; const m = a.length>>1; return a.length%2 ? a[m] : (a[m-1]+a[m])/2; };
+const sum = arr => arr.reduce((s,v)=>s+num(v),0);
+const platChip = id => PLAT[id] ? `<span class="plat"><i style="background:${PLAT[id].color}"></i>${PLAT[id].name}</span>` : '';
+const exChip = o => o && o.example ? '<span class="chip example">Example</span>' : '';
+function detectPlat(url){ url = String(url||'').toLowerCase();
+  if (url.includes('tiktok.')) return 'tt';
+  if (url.includes('instagram.') || url.includes('instagr.am')) return 'ig';
+  if (url.includes('youtu')) return 'yt';
+  return ''; }
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(()=>{ t.hidden = true; }, 2200); }
+function setMsg(el, text, kind){ el = typeof el === 'string' ? $(el) : el; if (!el) return; el.innerHTML = text ? `<div class="note ${kind||''}">${esc(text)}</div>` : ''; }
+function store(k, v){ try { if (v === undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); } catch(e) { return null; } }
+async function copyText(text, btn){
+  try { await navigator.clipboard.writeText(text); toast('Copied'); if (btn){ const o = btn.textContent; btn.textContent = 'Copied'; setTimeout(()=>btn.textContent=o, 1400);} }
+  catch(e){ toast('Copy blocked here. Select the text and copy it manually.'); }
+}
+function md(text){
+  const lines = esc(text).split('\n'); let html = '', inList = false;
+  const inline = s => s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  for (const raw of lines){ const l = raw.trim();
+    if (/^[-*•] /.test(l)){ if (!inList){ html += '<ul>'; inList = true; } html += `<li>${inline(l.slice(2))}</li>`; continue; }
+    if (inList){ html += '</ul>'; inList = false; }
+    if (/^#{1,4} /.test(l)) html += `<h4>${inline(l.replace(/^#+ /,''))}</h4>`;
+    else if (l) html += `<p>${inline(l)}</p>`;
+  }
+  if (inList) html += '</ul>';
+  return html;
+}
+
+/* ---------- persistence ---------- */
+const queues = {};
+function enqueue(path, fn){ const q = (queues[path] || Promise.resolve()).then(fn, fn); queues[path] = q.catch(()=>{}); return q; }
+function dbErr(e){
+  const c = e && e.code;
+  if (c === 'quota_exceeded') toast('Storage is full. Delete some old posts or ideas.');
+  else if (c === 'invalid_argument') toast("You can view this dashboard but can't change it.");
+  else toast("Couldn't save. Check your connection and try again.");
+}
+async function putDoc(col, id, data){
+  const list = S[col]; const i = list.findIndex(x => x.id === id);
+  const rec = {...data, id}; if (i >= 0) list[i] = rec; else list.push(rec);
+  renderAll();
+  if (!S.db) return;
+  const body = {...data}; delete body.id;
+  return enqueue(col+'/'+id, () => S.db.collection(col).doc(id).set(body)).catch(dbErr);
+}
+async function patchDoc(col, id, partial){
+  const cur = S[col].find(x => x.id === id); if (!cur) return;
+  return putDoc(col, id, {...cur, ...partial, updatedAt:Date.now()});
+}
+async function delDoc(col, id){
+  S[col] = S[col].filter(x => x.id !== id); renderAll();
+  if (!S.db) return;
+  return enqueue(col+'/'+id, () => S.db.collection(col).doc(id).delete()).catch(dbErr);
+}
+async function putMeta(id, data){
+  if (!S.db) return;
+  return enqueue('meta/'+id, () => S.db.doc('meta/'+id).set(data)).catch(dbErr);
+}
+function saveProfile(){ return putMeta('profile', {...S.profile}); }
+function saveDays(){ return putMeta('challenge', {days:S.days}); }
+
+async function boot(){
+  restoreUi();
+  setAiAvailability();
+  route();
+  renderAll();
+  const claude = window.claude;
+  if (!claude || typeof claude.use !== 'function'){ S.dbState = 'off'; renderStatus(); setAiAvailability(); return; }
+  claude.use('sample').then(async s => {
+    S.sample = s; if (s){ try { const lim = await s.limits(); S.imgMax = lim && lim.images ? lim.images.maxCount : 0; } catch(e) { S.imgMax = 0; } }
+    setAiAvailability();
+  });
+  const db = await claude.use('db');
+  if (!db){ S.dbState = 'off'; renderStatus(); return; }
+  S.db = db;
+  const timer = setTimeout(() => { if (S.dbState === 'connecting'){ S.dbState = 'slow'; renderStatus(); } }, 10000);
+  const pending = new Set(['videos','posts','ideas','profile','challenge','analysis']);
+  const loaded = (k, snap) => { if (!snap.metadata.fromCache) pending.delete(k); if (!pending.size){ clearTimeout(timer); S.dbState = 'live'; } renderStatus(); };
+  const fail = e => { clearTimeout(timer); S.dbState = 'error'; renderStatus(); console.warn(e); };
+  for (const col of ['videos','posts','ideas']){
+    db.collection(col).onSnapshot(snap => { S[col] = snap.docs.map(d => ({...d.data(), id:d.id})); loaded(col, snap); renderAll(); }, fail);
+  }
+  db.doc('meta/profile').onSnapshot(snap => { if (snap.exists) S.profile = {...DEFAULT_PROFILE, ...snap.data()}; loaded('profile', snap); fillForms(); renderAll(); }, fail);
+  db.doc('meta/challenge').onSnapshot(snap => { const d = snap.exists ? snap.data() : null; S.days = d && d.days ? JSON.parse(JSON.stringify(d.days)) : {}; loaded('challenge', snap); renderAll(); }, fail);
+  db.doc('meta/analysis').onSnapshot(snap => { S.analysis = snap.exists ? snap.data() : null; loaded('analysis', snap); renderAnalysisOut(); }, fail);
+}
+function renderStatus(){
+  const el = $('save-status'); el.className = 'status';
+  const map = { connecting:'Connecting…', live:'<b>●</b> Saved to your dashboard', slow:"<b>●</b> Can't reach your saved data yet", error:'<b>●</b> Lost connection. Reload to reconnect', off:'<b>●</b> Not saving. Open this page in Claude to keep your data' };
+  if (S.dbState !== 'live' && S.dbState !== 'connecting') el.classList.add('warn');
+  el.innerHTML = map[S.dbState] || '';
+}
+
+/* ---------- AI ---------- */
+const AI_BUTTONS = ['rc-go','id-go','an-ai-go','im-go'];
+function setAiAvailability(){
+  const ok = !!S.sample;
+  for (const id of AI_BUTTONS){ const b = $(id); if (b){ b.disabled = !ok; b.title = ok ? '' : 'AI features work when this page is open in Claude'; } }
+  document.querySelectorAll('[data-ai]').forEach(b => { b.disabled = !ok; });
+}
+function aiErr(e){
+  const c = e && e.code;
+  if (['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(c)){ S.sample = null; setAiAvailability(); return "Claude isn't turned on for this page. Allow it from the page's permissions menu to use the AI tools."; }
+  return ({
+    cancelled:'Stopped.', rate_limited:"You've hit your Claude usage limit for now. Try again in a little while.",
+    refused:'Claude declined this request. Try rewording what you pasted.', invalid_json:'The answer came back in the wrong shape. Press the button again.',
+    prompt_too_large:"That's too much text in one go. Trim the transcript or paste fewer rows.", image_rejected:"One of the images couldn't be read. Try a different file.",
+    images_unavailable:"Images can't be sent to Claude in this view. Paste the transcript instead.", empty_completion:'Claude returned nothing. Try again with more detail.',
+    session_expired:'Your Claude session expired. Sign in again and retry.',
+  })[c] || "Couldn't reach Claude. Try again.";
+}
+function brandBlock(){
+  const p = S.profile;
+  return [
+    `Creator: ${p.name || '(name not set)'} ${p.handle ? '('+p.handle+')' : ''}`,
+    `Posts on: TikTok, Instagram Reels, YouTube Shorts (same video cross-posted)`,
+    `Audience: ${p.audience || 'not set'}`,
+    `Content pillars: ${(p.pillars||[]).join(', ')}`,
+    `Voice & style: ${p.voice || 'not set: keep it direct, punchy and conversational'}`,
+    `Goal: ${p.goal || 'grow a personal brand'}`,
+    p.cta ? `Usual CTA: ${p.cta}` : '',
+  ].filter(Boolean).join('\n');
+}
+function performanceDigest(limit){
+  const posts = S.posts.filter(p => !p.example);
+  const use = posts.length ? posts : S.posts;
+  if (!use.length) return 'No performance data logged yet.';
+  const med = platMedians();
+  const ranked = use.map(p => ({p, x: med[p.platform] ? num(p.views)/med[p.platform] : 0})).sort((a,b)=>b.x-a.x);
+  const line = ({p,x}) => `- [${PLAT[p.platform]?.name||p.platform}] "${p.title}" (${p.pillar||'?'}, ${p.format||'?'}) ${compact(p.views)} views, ${x.toFixed(1)}x typical`;
+  const top = ranked.slice(0, limit).map(line).join('\n');
+  const nBottom = Math.min(4, Math.max(0, ranked.length - limit));
+  const bottom = nBottom ? ranked.slice(-nBottom).map(line).join('\n') : '';
+  return `Best performers:\n${top}${bottom ? '\nWeakest:\n' + bottom : ''}`;
+}
+
+/* ---------- routing ---------- */
+const VIEWS = ['today','recreate','ideas','analytics','challenge','brand'];
+function route(){
+  const h = (location.hash || '').slice(1);
+  S.view = VIEWS.includes(h) ? h : 'today';
+  for (const v of VIEWS) $('v-'+v).hidden = v !== S.view;
+  document.querySelectorAll('.tabs a').forEach(a => a.setAttribute('aria-current', a.dataset.tab === S.view ? 'page' : 'false'));
+  renderView();
+}
+window.addEventListener('hashchange', () => { route(); window.scrollTo(0,0); });
+
+function restoreUi(){
+  const u = store('ccr-ui') || {};
+  if (u.period) S.period = u.period; if (u.plat) S.plat = u.plat;
+  syncSeg('an-period', 'p', S.period); syncSeg('an-plat', 'pl', S.plat);
+}
+function saveUi(){ store('ccr-ui', {period:S.period, plat:S.plat}); }
+function syncSeg(id, key, val){ document.querySelectorAll(`#${id} button`).forEach(b => b.setAttribute('aria-pressed', String(b.dataset[key] === val))); }
+
+/* ---------- challenge logic ---------- */
+function dayPlats(date){
+  const manual = S.days[date] || {};
+  const out = {};
+  for (const p of PLATS) out[p.id] = !!manual[p.id] || S.posts.some(x => x.date === date && x.platform === p.id && !x.example);
+  return out;
+}
+const dayCount = date => Object.values(dayPlats(date)).filter(Boolean).length;
+const goal = () => Math.min(3, Math.max(1, num(S.profile.dailyGoal) || 3));
+const dayDone = date => dayCount(date) >= goal();
+function challenge(){
+  const start = S.profile.challengeStart; const t = todayIso();
+  if (!start) return null;
+  const dayNum = daysBetween(start, t) + 1;
+  let done = 0, longest = 0, run = 0;
+  for (let i = 0; i < CHALLENGE_DAYS; i++){ const d = addDays(start, i); if (d > t) break;
+    if (dayDone(d)){ done++; run++; longest = Math.max(longest, run); } else if (d !== t) run = 0; }
+  let streak = 0; let d = dayDone(t) ? t : addDays(t, -1);
+  while (d >= start && dayDone(d)){ streak++; d = addDays(d, -1); }
+  return {start, dayNum, done, longest, streak, end:addDays(start, CHALLENGE_DAYS-1)};
+}
+function toggleDay(date, plat){
+  const autoFromPost = S.posts.some(x => x.date === date && x.platform === plat && !x.example);
+  if (autoFromPost && !(S.days[date]||{})[plat]){ toast(`Already counted from a ${PLAT[plat].name} post you logged`); return; }
+  const cur = {...(S.days[date] || {})}; cur[plat] = !cur[plat];
+  S.days = {...S.days, [date]: cur};
+  renderAll(); saveDays();
+}
+
+/* ---------- analytics logic ---------- */
+function platMedians(){
+  const out = {}; const use = S.posts.some(p => !p.example) ? S.posts.filter(p => !p.example) : S.posts;
+  for (const p of PLATS) out[p.id] = median(use.filter(x => x.platform === p.id).map(x => num(x.views)));
+  return out;
+}
+function periodRange(){
+  const t = todayIso();
+  if (S.period === 'all'){ const dates = S.posts.map(p => p.date).filter(Boolean).sort(); return {from: dates[0] || addDays(t,-29), to:t, prev:null}; }
+  const n = Number(S.period); const from = addDays(t, -(n-1));
+  return {from, to:t, prev:{from:addDays(from, -n), to:addDays(from, -1)}};
+}
+const inRange = (p, r) => p.date && p.date >= r.from && p.date <= r.to;
+const platOk = p => S.plat === 'all' || p.platform === S.plat;
+function stats(list){
+  const views = sum(list.map(p=>p.views));
+  const eng = sum(list.map(p => num(p.likes)+num(p.comments)+num(p.shares)+num(p.saves)));
+  const med = platMedians();
+  return { posts:list.length, views, avg: list.length ? views/list.length : 0, er: views ? eng/views : 0,
+    follows: sum(list.map(p=>p.follows)), hits: list.filter(p => med[p.platform] && num(p.views) >= 3*med[p.platform]).length };
+}
+
+/* ---------- rendering ---------- */
+function renderAll(){ renderHeader(); renderView(); }
+function renderView(){
+  ({today:renderToday, recreate:renderRecreate, ideas:renderIdeas, analytics:renderAnalytics, challenge:renderChallenge, brand:renderBrand})[S.view]();
+}
+function renderHeader(){
+  const p = S.profile; const c = challenge(); const t = todayIso();
+  $('hdr-name').textContent = p.name ? `${p.name}'s Control Room` : 'Creator Control Room';
+  $('hdr-handle').textContent = [p.handle, (p.pillars||[]).slice(0,4).join(' · ')].filter(Boolean).join('  /  ');
+  $('hdr-day').textContent = c ? (c.dayNum < 1 ? `starts ${fmtDate(c.start)}` : `${pad3(Math.min(c.dayNum, CHALLENGE_DAYS))}/090`) : 'not started';
+  $('hdr-streak').textContent = c ? `${c.streak} day${c.streak===1?'':'s'}` : '0';
+  $('hdr-today').textContent = `${dayCount(t)}/${goal()}`;
+  $('hdr-rec').classList.toggle('live', !!c && c.dayNum >= 1 && c.dayNum <= CHALLENGE_DAYS && !dayDone(t));
+}
+const pad3 = n => String(Math.max(0,n)).padStart(3, '0');
+
+function platToggles(date){
+  const st = dayPlats(date);
+  return `<div class="stack" style="gap:8px">${PLATS.map(p => `
+    <button type="button" class="toggle" data-toggle-day="${date}" data-plat="${p.id}" aria-pressed="${st[p.id]}" style="color:${st[p.id] ? p.color : 'var(--ink)'}">
+      <span class="plat" style="font-size:.85rem;color:var(--ink)"><i style="background:${p.color}"></i>${p.name}</span>
+      <span class="box">${st[p.id] ? '✓' : ''}</span>
+    </button>`).join('')}</div>`;
+}
+
+function renderToday(){
+  const t = todayIso(); const c = challenge();
+  $('today-date').textContent = new Date().toLocaleDateString(undefined, {weekday:'long', month:'long', day:'numeric'});
+  let slate;
+  if (!c){
+    slate = `<div class="stack"><span class="eyebrow">90-day challenge</span><div class="bigday">DAY 000<small> /090</small></div>
+      <p class="muted">Start today and post every day for 90 days. The dashboard keeps score.</p>
+      <button type="button" class="primary" id="start-today">Start the challenge today</button></div>`;
+  } else {
+    const n = Math.min(Math.max(c.dayNum,0), CHALLENGE_DAYS);
+    const status = c.dayNum < 1 ? `<span class="chip">Starts ${fmtDate(c.start)}</span>` : c.dayNum > CHALLENGE_DAYS ? '<span class="chip good">Challenge finished</span>' : dayDone(t) ? '<span class="chip good">✓ Today done</span>' : '<span class="chip rec">● Not posted yet</span>';
+    slate = `<div class="stack">
+      <div class="row" style="justify-content:space-between"><span class="eyebrow">90-day challenge</span>${status}</div>
+      <div class="bigday">DAY ${pad3(n)}<small> /090</small></div>
+      <div class="prog" aria-label="${c.done} of 90 days complete"><i style="width:${(c.done/CHALLENGE_DAYS*100).toFixed(1)}%"></i></div>
+      <div class="row small" style="justify-content:space-between"><span><b class="mono">${c.done}</b> days done</span><span><b class="mono">${c.streak}</b> day streak</span><span>ends <b>${fmtDate(c.end)}</b></span></div>
+      <h4 style="margin-top:6px">Posted today</h4>${platToggles(t)}
+      <p class="small muted">A day counts at ${goal()} platform${goal()>1?'s':''}. Change this in the challenge rules.</p></div>`;
+  }
+  $('today-slate').innerHTML = slate;
+
+  const last7 = S.posts.filter(p => p.date >= addDays(t,-6) && p.date <= t);
+  const prev7 = S.posts.filter(p => p.date >= addDays(t,-13) && p.date <= addDays(t,-7));
+  const a = stats(last7), b = stats(prev7);
+  const ex = last7.some(p=>p.example);
+  $('today-kpis').innerHTML = [
+    kpi('Views, last 7 days', compact(a.views), delta(a.views, b.views), ex),
+    kpi('Posts, last 7 days', a.posts, delta(a.posts, b.posts), ex),
+    kpi('Engagement rate', pct(a.er), deltaPts(a.er, b.er), ex),
+    kpi('New followers', compact(a.follows), delta(a.follows, b.follows), ex),
+  ].join('');
+
+  const next = S.videos.filter(v => v.status !== 'posted').sort((x,y) => STAGE_ORDER(y.status) - STAGE_ORDER(x.status) || num(y.createdAt)-num(x.createdAt)).slice(0,4);
+  $('today-next').innerHTML = next.length ? `<div class="list">${next.map(v => `
+    <a class="item clickable" href="#recreate" data-open-video="${esc(v.id)}" style="text-decoration:none;color:inherit">
+      <span class="t">${esc(v.title || 'Untitled reference')}</span><span class="chip">${esc(stageName(v.status))}</span>
+      <span class="meta">${platChip(v.platform)}${v.creator ? `<span>${esc(v.creator)}</span>` : ''}${exChip(v)}</span></a>`).join('')}</div>`
+    : `<div class="empty"><b>Nothing queued</b>Save a video you want to recreate and it shows up here.</div>`;
+
+  const ideas = S.ideas.filter(i => i.status !== 'used').sort((x,y)=>num(y.score)-num(x.score)).slice(0,4);
+  $('today-ideas').innerHTML = ideas.length ? `<div class="list">${ideas.map(i => `
+    <a class="item clickable" href="#ideas" style="text-decoration:none;color:inherit"><span class="t">${esc(i.title)}</span>${scoreChip(i.score)}
+      <span class="meta"><span>${esc(i.pillar||'')}</span><span>${esc(i.format||'')}</span>${exChip(i)}</span></a>`).join('')}</div>`
+    : `<div class="empty"><b>No saved ideas</b>Ask the idea engine for a batch and save the good ones.</div>`;
+
+  const med = platMedians();
+  const recent = S.posts.filter(p => p.date >= addDays(t, -29)).map(p => ({p, x: med[p.platform] ? num(p.views)/med[p.platform] : 0})).sort((a,b)=>b.x-a.x)[0];
+  $('today-best').innerHTML = recent ? `<div class="row" style="justify-content:space-between;align-items:flex-start">
+      <div class="stack" style="gap:4px;min-width:0;flex:1"><span class="t" style="font-weight:700;font-size:1.05rem">${esc(recent.p.title)}</span>
+      <span class="row small muted">${platChip(recent.p.platform)}<span>${fmtDate(recent.p.date)}</span><span>${esc(recent.p.pillar||'')}</span>${exChip(recent.p)}</span></div>
+      <div style="text-align:right"><div class="tile" style="border:0;padding:0"><div class="n">${compact(recent.p.views)}</div><div class="d muted">views · ${recent.x.toFixed(1)}× your typical</div></div></div></div>
+      <p class="small muted" style="margin-top:8px">Make another one like this while the topic is warm: same hook pattern, new angle.</p>`
+    : `<div class="empty"><b>No posts logged in the last 30 days</b>Log posts in Analytics to see what's working.</div>`;
+}
+const STAGE_ORDER = s => ({filmed:3, scripted:2, saved:1, posted:0})[s] ?? 1;
+const stageName = s => (STAGES.find(x => x.id === s) || STAGES[0]).name;
+const scoreChip = s => s ? `<span class="chip ${s>=8?'good':s>=6?'warn':''}" title="Viral potential, Claude's estimate">${num(s)}/10</span>` : '';
+function kpi(label, value, d, ex){ return `<div class="tile"><span class="eyebrow">${esc(label)}</span><div class="n">${value}</div><div class="d">${d}${ex ? ' <span class="chip example">Example</span>' : ''}</div></div>`; }
+function delta(a, b){ if (!b) return `<span class="muted">no earlier data</span>`; const r = (a-b)/b; return `<span class="${r>=0?'up':'down'}">${r>=0?'▲':'▼'} ${Math.abs(r*100).toFixed(0)}%</span> <span class="muted">vs before</span>`; }
+function deltaPts(a, b){ if (!b) return `<span class="muted">no earlier data</span>`; const r = (a-b)*100; return `<span class="${r>=0?'up':'down'}">${r>=0?'▲':'▼'} ${Math.abs(r).toFixed(1)} pts</span> <span class="muted">vs before</span>`; }
+
+/* ----- recreate ----- */
+function renderRecreate(){
+  const list = S.videos.filter(v => S.rcFilter === 'all' || (v.status||'saved') === S.rcFilter).sort((a,b)=>num(b.createdAt)-num(a.createdAt));
+  $('rc-list').innerHTML = list.length ? list.map(v => `
+    <div class="item clickable ${S.selVideo===v.id?'sel':''}" data-sel-video="${esc(v.id)}" role="button" tabindex="0">
+      <span class="t">${esc(v.title || 'Untitled reference')}</span><span class="chip">${esc(stageName(v.status))}</span>
+      <span class="meta">${platChip(v.platform)}${v.creator?`<span>${esc(v.creator)}</span>`:''}${v.breakdown?'<span>✓ broken down</span>':''}${v.editorPrompt?'<span>✓ editor prompt</span>':''}${exChip(v)}</span>
+    </div>`).join('')
+    : `<div class="empty"><b>${S.videos.length ? 'Nothing at this stage' : 'Your library is empty'}</b>${S.videos.length ? 'Pick another filter.' : 'Paste a video on the left to start.'}</div>`;
+  renderVideoDetail();
+}
+function renderVideoDetail(){
+  const el = $('rc-detail'); const v = S.videos.find(x => x.id === S.selVideo);
+  if (!v){ el.innerHTML = `<div class="empty"><b>Pick a video from the library</b>Its transcript, breakdown, your version and the editor prompt open here.</div>`; return; }
+  const b = v.breakdown; const busy = S.busy[v.id];
+  const beats = b && Array.isArray(b.beats) ? `<div class="beats">${b.beats.map(x => `<div class="beat"><span class="tc">${esc(x.t||'')}</span><div><b>${esc(x.label||'')}</b><div class="small">${esc(x.what||'')}</div></div></div>`).join('')}</div>` : '';
+  const ed = b && b.editing ? Object.entries(b.editing).map(([k,val]) => `<div class="small"><b>${esc(k.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase()))}:</b> ${esc(val)}</div>`).join('') : '';
+  const mine = b && b.myVersion ? b.myVersion : null;
+  el.innerHTML = `
+    <div class="stack">
+      <div class="row" style="justify-content:space-between;align-items:flex-start">
+        <div class="stack" style="gap:4px;min-width:0;flex:1">
+          <h3>${esc(v.title || 'Untitled reference')}</h3>
+          <div class="row small muted">${platChip(v.platform)}${v.creator?`<span>${esc(v.creator)}</span>`:''}${v.url?`<a href="${esc(v.url)}" target="_blank" rel="noopener">Open original ↗</a>`:''}${exChip(v)}</div>
+          ${v.notes ? `<p class="small">${esc(v.notes)}</p>` : ''}
+        </div>
+        <label class="f" style="min-width:130px">Stage<select data-stage="${esc(v.id)}">${STAGES.map(s => `<option value="${s.id}" ${s.id===(v.status||'saved')?'selected':''}>${s.name}</option>`).join('')}</select></label>
+      </div>
+      <div class="row">
+        <button type="button" class="ai ${b?'':'primary'}" data-ai data-break="${esc(v.id)}" ${busy||!S.sample?'disabled':''}>${b ? 'Redo breakdown' : 'Break it down'}</button>
+        <button type="button" class="ai ${b && !v.editorPrompt ? 'primary':''}" data-ai data-eprompt="${esc(v.id)}" ${busy||!S.sample?'disabled':''}>${v.editorPrompt ? 'Rewrite editor prompt' : 'Write editor prompt'}</button>
+        ${busy ? `<button type="button" class="ghost" data-stop="${esc(v.id)}">Stop</button>` : ''}
+      </div>
+      <div id="rc-detail-msg">${busy ? `<div class="note">${esc(busy)}</div>` : ''}</div>
+      ${v.editorPrompt || S.busy[v.id+':ep'] ? `
+      <details open><summary>Editor prompt</summary><div class="body">
+        <div class="row"><button type="button" data-copy-ep="${esc(v.id)}">Copy prompt</button><span class="small muted">Paste into your editor chat along with your raw footage.</span></div>
+        <div class="out" id="ep-out-${esc(v.id)}">${esc(S.busy[v.id+':ep'] || v.editorPrompt)}</div></div></details>` : ''}
+      ${b ? `
+      <details open><summary>Why it works</summary><div class="body">
+        ${b.hook ? `<div class="note"><span class="eyebrow">Hook · ${esc(b.hook.type||'')}${b.hook.seconds?` · ${esc(b.hook.seconds)}s`:''}</span><div style="font-weight:700;font-size:1rem;margin:4px 0">“${esc(b.hook.line||'')}”</div><div class="small">${esc(b.hook.why||'')}</div></div>` : ''}
+        ${Array.isArray(b.whyItWorks) ? `<ul class="small" style="margin:0;padding-left:18px">${b.whyItWorks.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+        ${Array.isArray(b.retention) && b.retention.length ? `<div class="small"><b>Retention tricks:</b> ${b.retention.map(esc).join(' · ')}</div>` : ''}
+        ${b.format ? `<div class="small"><b>Format:</b> ${esc(b.format)}</div>` : ''}
+      </div></details>
+      <details open><summary>Beat by beat</summary><div class="body">${beats}${ed}</div></details>` : ''}
+      ${mine ? `
+      <details open><summary>Your version</summary><div class="body">
+        ${mine.angle ? `<p class="small"><b>Angle:</b> ${esc(mine.angle)}</p>` : ''}
+        ${Array.isArray(mine.hooks) ? `<div class="stack" style="gap:6px"><span class="eyebrow">Hook options</span>${mine.hooks.map(h=>`<div class="note" style="font-weight:600">“${esc(h)}”</div>`).join('')}</div>` : ''}
+        ${mine.script ? `<div class="row"><span class="eyebrow">Script to film</span><button type="button" class="sm" data-copy-script="${esc(v.id)}">Copy</button></div><div class="out">${esc(mine.script)}</div>` : ''}
+      </div></details>` : ''}
+      <details ${b ? '' : 'open'}><summary>Transcript</summary><div class="body">
+        ${(b && b.transcript) || v.transcript ? `<div class="out">${esc((b && b.transcript) || v.transcript)}</div>` : '<p class="small muted">No transcript yet. Break it down with a video file and Claude reconstructs it from the on-screen captions.</p>'}
+      </div></details>
+      <div class="row" style="justify-content:flex-end;border-top:1px solid var(--line);padding-top:10px">
+        <button type="button" class="ghost danger sm" data-del-video="${esc(v.id)}">${S.confirmDel === v.id ? 'Press again to delete' : 'Delete'}</button>
+      </div>
+    </div>`;
+}
+
+const ctrls = {};
+async function breakDown(id, frames){
+  const v = S.videos.find(x => x.id === id); if (!v || !S.sample) return;
+  ctrls[id] = new AbortController();
+  S.busy[id] = frames && frames.length ? `Claude is watching ${frames.length} frames and breaking it down…` : 'Claude is breaking it down…';
+  renderAll();
+  const prompt = `You analyze short-form videos for a creator who wants to recreate what works. Study this reference video and break down exactly why it performs, then adapt it to the creator.
+
+CREATOR
+${brandBlock()}
+
+REFERENCE VIDEO
+Platform: ${PLAT[v.platform]?.name || 'unknown'}
+Link: ${v.url || 'n/a'}
+Creator: ${v.creator || 'unknown'}
+Working title: ${v.title || 'n/a'}
+Creator's note: ${v.notes || 'none'}
+Transcript provided: ${v.transcript ? '\n"""\n' + v.transcript.slice(0, 20000) + '\n"""' : 'none'}
+${frames && frames.length ? `\nI attached ${frames.length} frames from the video, in order, at these timestamps (seconds): ${frames.map(f=>f.t.toFixed(1)).join(', ')}. Read any burned-in captions and on-screen text, and note the shot types, framing, text styling and edit style. If no transcript was provided, reconstruct the spoken script as best you can from the captions and mark guessed parts with [?].` : ''}
+
+Reply with only a JSON object in this shape:
+{
+ "title": "short name for this video (max 8 words)",
+ "transcript": "clean transcript with [m:ss] timestamps where known. If none was available, your reconstruction, or an empty string",
+ "hook": {"line": "the exact opening line or visual", "type": "e.g. curiosity gap, contrarian, story drop-in, visual shock", "seconds": 2, "why": "one sentence"},
+ "format": "e.g. talking head with green screen, POV skit, street interview",
+ "beats": [{"t": "0:00", "label": "Hook", "what": "what happens and why it keeps people watching"}],
+ "editing": {"pacing": "cuts per minute and rhythm", "captions": "style, position, highlight words", "visuals": "b-roll, zooms, screen recordings, props", "sound": "music mood, SFX, voice", "onScreenText": "titles, labels, stickers"},
+ "whyItWorks": ["3 to 5 specific reasons"],
+ "retention": ["devices used to hold attention, e.g. open loop at 0:04, pattern interrupt at 0:12"],
+ "myVersion": {"angle": "how this creator should remake it for their pillars and voice, not a copy", "hooks": ["3 hook lines in the creator's voice"], "script": "a full ready-to-film script in the creator's voice, about the same length as the original, with [VISUAL] cues in brackets"}
+}
+Be concrete. Don't invent facts about the reference you can't see; say "unclear" instead.`;
+  try {
+    const opts = {signal: ctrls[id].signal, modelTier:'default'};
+    if (frames && frames.length) opts.images = frames.map(f => f.blob);
+    const r = await S.sample.json(prompt, opts);
+    if (!r || typeof r !== 'object') throw {code:'invalid_json'};
+    delete S.busy[id];
+    const cur = S.videos.find(x => x.id === id) || v;
+    await putDoc('videos', id, {...cur, title: cur.title || r.title || '', breakdown: r, status: (cur.status === 'saved' || !cur.status) ? 'scripted' : cur.status, updatedAt: Date.now()});
+    toast('Breakdown ready');
+  } catch(e){
+    delete S.busy[id]; renderAll();
+    setMsg('rc-detail-msg', aiErr(e), e && e.code === 'cancelled' ? '' : 'err');
+  }
+}
+function localEditorPrompt(v){
+  const b = v.breakdown || {}; const m = b.myVersion || {};
+  return `You are my video editor. Edit my raw footage into a short-form video that recreates the structure and pacing of a reference video, in my own voice.
+
+ABOUT ME
+${brandBlock()}
+${S.profile.editor ? '\nHOW I LIKE MY EDITS\n' + S.profile.editor : ''}
+
+REFERENCE
+${v.title || ''} (${PLAT[v.platform]?.name || ''}) ${v.url || ''}
+Hook: ${b.hook ? b.hook.line + ' (' + b.hook.type + ')' : 'see transcript'}
+Structure:
+${(b.beats || []).map(x => `- ${x.t} ${x.label}: ${x.what}`).join('\n') || '- (no breakdown yet)'}
+${b.editing ? 'Edit style:\n' + Object.entries(b.editing).map(([k,val]) => `- ${k}: ${val}`).join('\n') : ''}
+
+MY SCRIPT
+${m.script || v.transcript || '(I will paste my script)'}
+
+WHAT I NEED BACK
+1. A cut list with timecodes against my footage
+2. Caption file (SRT) with key words highlighted
+3. B-roll, zoom and sound-effect cues with timecodes
+4. 3 cover/thumbnail text options
+5. Per-platform versions for TikTok, Instagram Reels and YouTube Shorts: length, caption and hashtags for each
+
+Keep the hook inside the first 1.5 seconds and add a pattern interrupt every 3 to 5 seconds.`;
+}
+async function writeEditorPrompt(id){
+  const v = S.videos.find(x => x.id === id); if (!v) return;
+  if (!S.sample){ await patchDoc('videos', id, {editorPrompt: localEditorPrompt(v)}); return; }
+  ctrls[id] = new AbortController(); S.busy[id] = 'Claude is writing the editor prompt…'; S.busy[id+':ep'] = ' '; renderAll();
+  const b = v.breakdown;
+  const prompt = `Write a prompt that a content creator will paste into a separate Claude chat that works as their AI video editor. The editor will also receive the creator's raw footage. The goal: recreate what made the reference video work, in the creator's own voice and brand, so it has the best possible chance to go viral on TikTok, Instagram Reels and YouTube Shorts.
+
+CREATOR
+${brandBlock()}
+${S.profile.editor ? `How the creator's editor works / edit preferences: ${S.profile.editor}` : ''}
+
+REFERENCE VIDEO
+${PLAT[v.platform]?.name || ''} ${v.url || ''} by ${v.creator || 'unknown'}: ${v.title || ''}
+${b ? 'Breakdown (JSON):\n' + JSON.stringify(b).slice(0, 18000) : 'Transcript:\n' + (v.transcript || '(none)').slice(0, 15000)}
+
+Write the prompt addressed to the editor ("you"), in plain text with short CAPITALISED section headings, in this order:
+GOAL: one paragraph: what we're making, target length, the feeling it should leave.
+ABOUT THE CREATOR: brand, audience, voice, in 3 to 5 lines.
+WHAT TO COPY FROM THE REFERENCE: hook mechanics, beat structure with timecodes, pacing (cuts per minute), caption style, visual and sound devices.
+WHAT TO CHANGE: topic, angle and voice so it's ours, not a copy.
+SCRIPT: the script the creator will film${b && b.myVersion ? ' (use the myVersion script, tightened)' : ''}, with [VISUAL] cues.
+EDIT INSTRUCTIONS: first 1.5 seconds frame by frame; cut rhythm; punch-ins and zooms; B-roll and screen-recording moments with timecodes; caption rules (words per line, highlight words, position in safe zone); sound design and music mood; on-screen text; a pattern interrupt every 3 to 5 seconds; ending that loops or lands the CTA.
+PLATFORM VERSIONS: TikTok, Instagram Reels, YouTube Shorts: ideal length, safe zones, cover frame text, post caption and 3 to 5 hashtags for each.
+DELIVERABLES: what the editor must return: timecoded cut list, SRT captions, B-roll/SFX cue list, 3 cover text options, 3 title options, and a final checklist.
+Output only the prompt itself, nothing before or after it.`;
+  try {
+    const r = await S.sample(prompt, {signal: ctrls[id].signal, modelTier:'default', onText: ({text}) => { S.busy[id+':ep'] = text; const o = $('ep-out-'+id); if (o) o.textContent = text; }});
+    delete S.busy[id]; delete S.busy[id+':ep'];
+    const cur = S.videos.find(x => x.id === id) || v;
+    await putDoc('videos', id, {...cur, editorPrompt: r.text, status: cur.status === 'saved' ? 'scripted' : (cur.status || 'scripted'), updatedAt: Date.now()});
+    toast(r.truncated ? 'Editor prompt ready (cut short, ask again for the rest)' : 'Editor prompt ready');
+  } catch(e){
+    delete S.busy[id]; const partial = e && e.text; delete S.busy[id+':ep']; renderAll();
+    setMsg('rc-detail-msg', aiErr(e), e && e.code === 'cancelled' ? '' : 'err');
+    if (partial){ const cur = S.videos.find(x => x.id === id); if (cur) patchDoc('videos', id, {editorPrompt: partial}); }
+  }
+}
+
+/* frame extraction */
+async function extractFrames(file, n){
+  const url = URL.createObjectURL(file);
+  const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = url;
+  try {
+    await new Promise((res, rej) => { v.onloadeddata = res; v.onerror = () => rej(new Error('read')); setTimeout(() => rej(new Error('timeout')), 15000); });
+    const dur = v.duration; if (!Number.isFinite(dur) || dur <= 0) throw new Error('duration');
+    const times = []; const early = [0.2, 1.2, 2.5].filter(t => t < dur);
+    times.push(...early.slice(0, Math.min(early.length, n)));
+    const rest = n - times.length; const from = Math.min(dur, 4);
+    for (let i = 0; i < rest; i++) times.push(Math.min(dur - 0.1, from + (dur - from) * (i + 0.5) / rest));
+    const scale = Math.min(1, 900 / Math.max(v.videoWidth, v.videoHeight));
+    const c = document.createElement('canvas'); c.width = Math.round(v.videoWidth*scale); c.height = Math.round(v.videoHeight*scale);
+    const ctx = c.getContext('2d'); const out = [];
+    for (const t of times){
+      await new Promise(res => { const h = () => { v.removeEventListener('seeked', h); clearTimeout(to); res(); }; const to = setTimeout(h, 3000); v.addEventListener('seeked', h); v.currentTime = Math.max(0, t); });
+      ctx.drawImage(v, 0, 0, c.width, c.height);
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.82));
+      if (blob) out.push({t, blob, url: URL.createObjectURL(blob)});
+    }
+    return {dur, frames: out};
+  } finally { URL.revokeObjectURL(url); }
+}
+function renderFrames(){
+  const el = $('rc-frames'); const f = S.frames;
+  if (!f){ el.hidden = true; el.innerHTML = ''; return; }
+  el.hidden = false;
+  el.innerHTML = f.loading ? '<div class="note">Pulling frames from the video…</div>' : f.error ? `<div class="note err">${esc(f.error)}</div>` :
+    `<div class="stack" style="gap:6px"><span class="small muted">${f.frames.length} frames from a ${f.dur.toFixed(0)}s video. Claude reads these.</span>
+     <div class="frames">${f.frames.map(x => `<figure><img src="${x.url}" alt="Frame at ${x.t.toFixed(1)} seconds"><figcaption>${x.t.toFixed(1)}s</figcaption></figure>`).join('')}</div></div>`;
+}
+
+/* ----- ideas ----- */
+function renderPillarSelects(){
+  const pillars = S.profile.pillars && S.profile.pillars.length ? S.profile.pillars : DEFAULT_PROFILE.pillars;
+  for (const [id, any] of [['id-pillar', true], ['po-pillar', false]]){
+    const sel = $(id); if (document.activeElement === sel) continue;
+    const val = sel.value;
+    const opts = (any ? ['<option value="any">Mix of pillars</option>'] : []).concat(pillars.map(p => `<option>${esc(p)}</option>`)).join('');
+    if (sel.innerHTML !== opts){ sel.innerHTML = opts; if ([...sel.options].some(o => o.value === val)) sel.value = val; }
+  }
+}
+function ideaRow(i, saved){
+  return `<div class="item" style="align-items:start">
+    <div class="stack" style="gap:4px;min-width:0">
+      <span class="t">${esc(i.title)}</span>
+      ${i.hook ? `<span class="small">Hook: <b>“${esc(i.hook)}”</b></span>` : ''}
+      ${i.why ? `<span class="small muted">${esc(i.why)}</span>` : ''}
+      <span class="meta" style="margin-top:2px">${i.pillar?`<span class="chip">${esc(i.pillar)}</span>`:''}${i.format?`<span class="chip">${esc(i.format)}</span>`:''}${i.timely?'<span class="chip rec">Timely</span>':''}${exChip(i)}</span>
+      ${saved && (i.script || S.busy['idea:'+i.id]) ? `<details ${S.busy['idea:'+i.id]?'open':''}><summary>Script &amp; editor prompt</summary><div class="body">
+        <div class="row"><button type="button" class="sm" data-copy-idea="${esc(i.id)}">Copy</button></div>
+        <div class="out" id="idea-out-${esc(i.id)}">${esc(S.busy['idea:'+i.id] || i.script)}</div></div></details>` : ''}
+    </div>
+    <div class="stack" style="gap:6px;align-items:flex-end">
+      ${scoreChip(i.score)}
+      ${saved ? `
+        <button type="button" class="sm ai" data-ai data-script-idea="${esc(i.id)}" ${S.busy['idea:'+i.id]||!S.sample?'disabled':''}>${i.script ? 'Rewrite script' : 'Script it'}</button>
+        <button type="button" class="sm ghost" data-idea-used="${esc(i.id)}">${i.status==='used'?'Reopen':'Mark used'}</button>
+        <button type="button" class="sm ghost danger" data-del-idea="${esc(i.id)}">${S.confirmDel === i.id ? 'Press again' : 'Delete'}</button>`
+      : `<button type="button" class="sm" data-save-idea="${esc(i._k)}" ${i._saved?'disabled':''}>${i._saved?'Saved':'Save'}</button>`}
+    </div></div>`;
+}
+function renderIdeas(){
+  renderPillarSelects();
+  $('id-results-card').hidden = !S.ideaResults.length;
+  $('id-results').innerHTML = S.ideaResults.map(i => ideaRow(i, false)).join('');
+  const list = S.ideas.filter(i => S.idFilter === 'used' ? i.status === 'used' : i.status !== 'used').sort((a,b)=>num(b.score)-num(a.score) || num(b.createdAt)-num(a.createdAt));
+  $('id-saved').innerHTML = list.length ? list.map(i => ideaRow(i, true)).join('')
+    : `<div class="empty"><b>${S.idFilter==='used'?'No used ideas yet':'No saved ideas'}</b>${S.idFilter==='used'?'Mark an idea used once you post it.':'Pitch a batch and save the ones you would film.'}</div>`;
+}
+async function pitchIdeas(){
+  if (!S.sample) return;
+  const ctl = new AbortController(); ctrls.ideas = ctl;
+  $('id-go').disabled = true; $('id-stop').hidden = false; setMsg('id-msg', 'Claude is thinking up ideas…');
+  const pillar = $('id-pillar').value, format = $('id-format').value, news = $('id-news').value.trim(), extra = $('id-extra').value.trim();
+  const refs = S.videos.filter(v => v.breakdown && v.breakdown.hook).slice(0, 8).map(v => `- ${v.title}: hook "${v.breakdown.hook.line}" (${v.breakdown.hook.type}), format ${v.breakdown.format || '?'}`).join('\n');
+  const prompt = `You are a short-form content strategist. Pitch 8 video ideas for this creator that have a real shot at going viral on TikTok, Instagram Reels and YouTube Shorts.
+
+CREATOR
+${brandBlock()}
+
+THEIR NUMBERS
+${performanceDigest(8)}
+
+VIDEOS THEY ADMIRE AND WANT TO RECREATE
+${refs || 'none saved yet'}
+
+REQUEST
+Pillar: ${pillar === 'any' ? 'mix across their pillars' : pillar}
+Format: ${format === 'any' ? 'any' : format}
+${news ? `What's happening right now (from the creator, ${todayIso()}):\n${news.slice(0, 8000)}` : `No news pasted. Today's date is ${todayIso()}. Favour evergreen angles; if an idea depends on recent events, set "timely": true so the creator checks it's still current.`}
+${extra ? 'Extra constraint: ' + extra : ''}
+
+Rules: lean into patterns that already worked for them. Each idea needs a scroll-stopping first line. Make them filmable by one person. No generic advice-listicles unless the angle is sharp.
+
+Reply with only a JSON array of 8 objects:
+[{"title": "short working title", "hook": "the exact first line said on camera", "pillar": "one of their pillars", "format": "format", "why": "one sentence on why this could pop for this creator", "score": 7, "timely": false}]
+"score" is your honest 1 to 10 estimate of viral potential.`;
+  try {
+    const r = await S.sample.json(prompt, {signal: ctl.signal, modelTier:'default', cache:false});
+    const arr = Array.isArray(r) ? r : (r && Array.isArray(r.ideas) ? r.ideas : []);
+    S.ideaResults = arr.filter(x => x && x.title).map((x, i) => ({title:String(x.title), hook:String(x.hook||''), pillar:String(x.pillar||''), format:String(x.format||''), why:String(x.why||''), score:Math.max(1, Math.min(10, Math.round(num(x.score)||5))), timely:!!x.timely, _k:'r'+i+Date.now()}));
+    setMsg('id-msg', S.ideaResults.length ? '' : 'No ideas came back. Try again with a different pillar.', S.ideaResults.length ? '' : 'err');
+    renderIdeas();
+  } catch(e){ setMsg('id-msg', aiErr(e), e && e.code === 'cancelled' ? '' : 'err'); }
+  finally { $('id-go').disabled = !S.sample; $('id-stop').hidden = true; }
+}
+async function scriptIdea(id){
+  const i = S.ideas.find(x => x.id === id); if (!i || !S.sample) return;
+  const key = 'idea:'+id; ctrls[key] = new AbortController(); S.busy[key] = 'Writing…'; renderIdeas();
+  const prompt = `Write a ready-to-film short-form video script for this creator, then a prompt they can paste into their separate AI video editor chat.
+
+CREATOR
+${brandBlock()}
+${S.profile.editor ? 'Editor preferences: ' + S.profile.editor : ''}
+
+IDEA
+Title: ${i.title}
+Hook: ${i.hook}
+Pillar: ${i.pillar} · Format: ${i.format}
+Why it could pop: ${i.why}
+
+THEIR BEST PATTERNS
+${performanceDigest(5)}
+
+Output plain text with these headings:
+SCRIPT (30 to 60 seconds, the creator's voice, [VISUAL] cues in brackets, hook in the first line)
+3 ALTERNATE HOOKS
+SHOT LIST (what to film, in order)
+EDITOR PROMPT (addressed to the editor as "you": goal, cut rhythm, first 1.5 seconds, captions style, B-roll and SFX cues, pattern interrupts every 3 to 5 seconds, ending/loop, per-platform versions for TikTok, Reels and Shorts with captions and hashtags, deliverables to return)`;
+  try {
+    const r = await S.sample(prompt, {signal: ctrls[key].signal, cache:false, onText: ({text}) => { S.busy[key] = text; const o = $('idea-out-'+id); if (o) o.textContent = text; }});
+    delete S.busy[key]; await patchDoc('ideas', id, {script: r.text});
+  } catch(e){ const part = e && e.text; delete S.busy[key]; if (part) await patchDoc('ideas', id, {script: part}); else renderIdeas(); if (e.code !== 'cancelled') toast(aiErr(e)); }
+}
+
+/* ----- analytics ----- */
+function renderAnalytics(){
+  renderPillarSelects();
+  if (!$('po-date').value) $('po-date').value = todayIso();
+  const r = periodRange();
+  const cur = S.posts.filter(p => inRange(p, r) && platOk(p));
+  const prev = r.prev ? S.posts.filter(p => inRange(p, r.prev) && platOk(p)) : [];
+  const a = stats(cur), b = stats(prev); const ex = cur.some(p => p.example);
+  const dd = (x,y) => r.prev ? delta(x,y) : '<span class="muted">all time</span>';
+  $('an-kpis').innerHTML = [
+    kpi('Views', compact(a.views), dd(a.views,b.views), ex),
+    kpi('Avg views / post', compact(a.avg), dd(a.avg,b.avg), ex),
+    kpi('Engagement rate', pct(a.er), r.prev ? deltaPts(a.er,b.er) : '<span class="muted">all time</span>', ex),
+    kpi('New followers', compact(a.follows), dd(a.follows,b.follows), ex),
+    kpi('Viral hits (3×+)', `${a.hits}<span class="muted" style="font-size:.9rem;font-weight:600"> / ${a.posts}</span>`, a.posts ? `<span class="muted">${pct(a.hits/a.posts)} hit rate</span>` : '<span class="muted">no posts</span>', ex),
+  ].join('');
+  drawLine(cur, r); drawBars(cur); renderTable(cur); renderAnalysisOut(); renderImport();
+}
+function buckets(r){
+  const span = daysBetween(r.from, r.to) + 1;
+  const size = span <= 45 ? 1 : span <= 200 ? 7 : 28;
+  const out = []; let end = r.to;
+  while (end >= r.from){ const start = addDays(end, -(size-1)); out.unshift({from: start < r.from ? r.from : start, to: end}); end = addDays(start, -1); }
+  return {list: out, size};
+}
+function drawLine(posts, r){
+  const el = $('an-line');
+  const plats = S.plat === 'all' ? PLATS : PLATS.filter(p => p.id === S.plat);
+  $('an-legend').innerHTML = plats.map(p => `<span><i style="background:${p.color}"></i>${p.name}</span>`).join('');
+  if (!posts.length){ el.innerHTML = `<div class="empty"><b>No posts in this range</b>Log a post below or import your analytics.</div>`; return; }
+  const {list: B, size} = buckets(r);
+  const series = plats.map(p => ({...p, vals: B.map(b => sum(posts.filter(x => x.platform === p.id && x.date >= b.from && x.date <= b.to).map(x => x.views)))}));
+  const W = Math.max(300, el.clientWidth || 600), H = 250, m = {t:14, r:84, b:26, l:44};
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const max = Math.max(1, ...series.flatMap(s => s.vals));
+  const step = niceStep(max / 4); const top = Math.ceil(max / step) * step;
+  const x = i => m.l + (B.length === 1 ? iw/2 : i * iw / (B.length - 1));
+  const y = v => m.t + ih - (v / top) * ih;
+  let g = '';
+  for (let v = 0; v <= top + 1e-9; v += step) g += `<line x1="${m.l}" x2="${m.l+iw}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)" stroke-width="1"/><text x="${m.l-8}" y="${y(v)+3.5}" text-anchor="end">${compact(v)}</text>`;
+  const every = Math.max(1, Math.ceil(B.length / Math.max(2, Math.floor(iw / 70))));
+  B.forEach((b, i) => { if (i % every === 0 || i === B.length-1 && (B.length-1) % every > every/2) g += `<text x="${x(i)}" y="${H-6}" text-anchor="middle">${fmtDate(b.from)}</text>`; });
+  let lines = '';
+  const ends = [];
+  for (const s of series){
+    const d = s.vals.map((v,i) => `${i?'L':'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join('');
+    lines += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    const li = s.vals.length - 1;
+    lines += `<circle cx="${x(li)}" cy="${y(s.vals[li])}" r="4" fill="${s.color}" stroke="var(--surface)" stroke-width="2"/>`;
+    ends.push({s, y: y(s.vals[li])});
+  }
+  ends.sort((a,b) => a.y - b.y);
+  for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i-1].y < 14) ends[i].y = ends[i-1].y + 14;
+  for (const e of ends) lines += `<text class="lbl" x="${x(B.length-1)+10}" y="${e.y+3.5}">${e.s.name} ${compact(e.s.vals[e.s.vals.length-1])}</text>`;
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Views over time by platform">${g}${lines}
+    <line id="an-cross" x1="0" x2="0" y1="${m.t}" y2="${m.t+ih}" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="3 3" visibility="hidden"/>
+    <rect x="${m.l}" y="${m.t}" width="${iw}" height="${ih}" fill="transparent" id="an-hit"/></svg><div class="tip" id="an-tip" hidden></div>`;
+  const hit = $('an-hit'), tip = $('an-tip'), cross = $('an-cross'), svg = el.querySelector('svg');
+  const show = ev => {
+    const rect = svg.getBoundingClientRect(); const sx = (ev.clientX - rect.left) * (W / rect.width);
+    const i = Math.max(0, Math.min(B.length-1, Math.round(B.length === 1 ? 0 : (sx - m.l) / (iw / (B.length-1)))));
+    cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('visibility', 'visible');
+    const b = B[i]; const label = size === 1 ? fmtDate(b.from) : `${fmtDate(b.from)} – ${fmtDate(b.to)}`;
+    tip.innerHTML = `<div class="eyebrow" style="margin-bottom:4px">${label}</div>` + series.map(s => `<div class="r"><span class="plat"><i style="background:${s.color}"></i>${s.name}</span><b>${compact(s.vals[i])}</b></div>`).join('');
+    tip.hidden = false;
+    const px = x(i) * rect.width / W; const tw = tip.offsetWidth;
+    tip.style.left = Math.min(rect.width - tw, Math.max(0, px + 12 + tw > rect.width ? px - tw - 12 : px + 12)) + 'px'; tip.style.top = '8px';
+  };
+  hit.addEventListener('pointermove', show); hit.addEventListener('pointerdown', show);
+  hit.addEventListener('pointerleave', () => { tip.hidden = true; cross.setAttribute('visibility','hidden'); });
+}
+function niceStep(raw){ const p = Math.pow(10, Math.floor(Math.log10(raw || 1))); const n = raw / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p; }
+function drawBars(posts){
+  const el = $('an-bars');
+  const groups = {}; for (const p of posts){ const k = p.pillar || 'Unlabelled'; (groups[k] = groups[k] || []).push(num(p.views)); }
+  const rows = Object.entries(groups).map(([k, v]) => ({k, med: median(v), n: v.length})).sort((a,b) => b.med - a.med);
+  if (!rows.length){ el.innerHTML = `<div class="empty"><b>No pillar data yet</b>Tag posts with a pillar when you log them.</div>`; return; }
+  const W = Math.max(280, el.clientWidth || 400), rowH = 34, m = {l:96, r:70, t:4}, H = rows.length * rowH + m.t + 4;
+  const iw = W - m.l - m.r, max = Math.max(1, ...rows.map(r => r.med));
+  let s = '';
+  rows.forEach((r, i) => {
+    const yy = m.t + i * rowH + 7, h = rowH - 14, w = Math.max(2, r.med / max * iw), rad = Math.min(4, w/2);
+    const label = r.k.length > 13 ? r.k.slice(0, 12) + '…' : r.k;
+    s += `<g><title>${esc(r.k)}: median ${compact(r.med)} views over ${r.n} post${r.n>1?'s':''}</title>
+      <text class="lbl" x="${m.l-10}" y="${yy+h/2+4}" text-anchor="end" style="font-family:var(--f-body);font-size:12px">${esc(label)}</text>
+      <path d="M${m.l},${yy} h${w-rad} a${rad},${rad} 0 0 1 ${rad},${rad} v${h-2*rad} a${rad},${rad} 0 0 1 -${rad},${rad} h-${w-rad} z" fill="var(--s-yt)"/>
+      <text x="${m.l+w+8}" y="${yy+h/2+4}" class="lbl">${compact(r.med)}</text><text x="${m.l+w+8}" y="${yy+h/2+4}" dx="${compact(r.med).length*7+6}">· ${r.n}</text></g>`;
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Median views by content pillar"><line x1="${m.l}" x2="${m.l}" y1="0" y2="${H}" stroke="var(--line)"/>${s}</svg><p class="small muted" style="margin-top:6px">Median views per post · number of posts</p>`;
+}
+function renderTable(posts){
+  const med = platMedians();
+  const all = [...posts].sort((a,b) => (b.date||'').localeCompare(a.date||'') || num(b.views)-num(a.views));
+  const rows = S.tableAll ? all : all.slice(0, 25);
+  if (!rows.length){ $('an-table').innerHTML = `<div class="empty"><b>No posts in this range</b>${S.posts.length ? 'Widen the time range above.' : 'Log your first post or import a batch from your analytics.'}</div>`; return; }
+  $('an-table').innerHTML = `<div class="tablewrap"><table><thead><tr><th>Date</th><th>Platform</th><th>Post</th><th>Pillar</th><th class="num">Views</th><th class="num">vs typical</th><th class="num">Eng. rate</th><th class="num">Shares</th><th class="num">Saves</th><th class="num">Follows</th><th class="num">Watch</th><th></th></tr></thead><tbody>
+    ${rows.map(p => { const x = med[p.platform] ? num(p.views)/med[p.platform] : 0; const er = num(p.views) ? (num(p.likes)+num(p.comments)+num(p.shares)+num(p.saves))/num(p.views) : 0;
+      return `<tr><td class="mono">${fmtDate(p.date)}</td><td>${platChip(p.platform)}</td><td class="title">${p.url?`<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.title||'Untitled')}</a>`:esc(p.title||'Untitled')} ${exChip(p)}</td><td>${esc(p.pillar||'')}</td>
+      <td class="num">${compact(p.views)}</td><td class="num">${x ? `<span class="chip ${x>=3?'good':x<0.5?'bad':''}">${x.toFixed(1)}×</span>` : ''}</td><td class="num">${pct(er)}</td><td class="num">${compact(p.shares)}</td><td class="num">${compact(p.saves)}</td><td class="num">${compact(p.follows)}</td><td class="num">${p.watch ? num(p.watch)+'%' : '–'}</td>
+      <td><button type="button" class="ghost sm danger" data-del-post="${esc(p.id)}">${S.confirmDel === p.id ? 'Press again' : 'Delete'}</button></td></tr>`; }).join('')}
+  </tbody></table></div>${all.length > 25 ? `<div class="row" style="margin-top:10px"><button type="button" class="sm" id="tbl-more">${S.tableAll ? 'Show the latest 25' : `Show all ${all.length} posts`}</button></div>` : ''}`;
+}
+function renderAnalysisOut(){
+  if (S.view !== 'analytics') return;
+  const out = $('an-ai-out'); if (S.busy.analysis){ out.innerHTML = `<div class="md">${md(S.busy.analysis)}</div>`; return; }
+  const a = S.analysis;
+  $('an-ai-when').textContent = a && a.at ? `Last run ${new Date(a.at).toLocaleDateString(undefined,{month:'short',day:'numeric'})}` : '';
+  out.innerHTML = a && a.text ? `<div class="md">${md(a.text)}</div>` : `<div class="empty"><b>No analysis yet</b>Log a week or two of posts, then ask Claude what's working, what isn't, and what to test next.</div>`;
+}
+async function analyze(){
+  if (!S.sample) return;
+  const real = S.posts.filter(p => !p.example);
+  const posts = (real.length ? real : S.posts).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0, 120);
+  if (!posts.length){ setMsg('an-ai-out', 'Log some posts first so Claude has numbers to read.', 'err'); return; }
+  const ctl = new AbortController(); ctrls.analysis = ctl; S.busy.analysis = 'Thinking…'; $('an-ai-go').disabled = true; $('an-ai-stop').hidden = false; renderAnalysisOut();
+  const med = platMedians(); const c = challenge();
+  const rows = posts.map(p => `${p.date}|${p.platform}|${(p.title||'').slice(0,90)}|${p.pillar||''}|${p.format||''}|views ${num(p.views)}|likes ${num(p.likes)}|comments ${num(p.comments)}|shares ${num(p.shares)}|saves ${num(p.saves)}|follows ${num(p.follows)}|watch ${p.watch||'?'}%|${(new Date(parseIso(p.date))).toLocaleDateString('en',{weekday:'short'})}`).join('\n');
+  const prompt = `You are a blunt, data-driven short-form growth strategist. Analyze this creator's performance and tell them how to get more viral hits.
+
+CREATOR
+${brandBlock()}
+Challenge: ${c ? `day ${c.dayNum} of a 90-day daily posting challenge, ${c.done} days completed, current streak ${c.streak}` : 'not started'}
+Median views per platform: ${PLATS.map(p => p.name + ' ' + Math.round(med[p.id])).join(', ')}
+${real.length ? '' : 'NOTE: these are example rows, not real data. Say so briefly at the top.'}
+
+POSTS (date|platform tt=TikTok ig=Instagram yt=YouTube|title|pillar|format|metrics|weekday)
+${rows}
+
+Write in short Markdown with these ## sections:
+## The headline (2 sentences: the single most important thing the data says)
+## What's working (patterns in topics, hooks, formats, platforms; cite specific posts and numbers)
+## What's not
+## Your viral formula (the repeatable recipe behind the outliers)
+## Next 7 days (exactly 3 experiments, each with what to post, on which platform, and what number would count as success)
+## Platform notes (one line each for TikTok, Instagram, YouTube)
+Use "-" bullets. Be specific; no generic advice. If there's too little data for a claim, say so.`;
+  try {
+    const r = await S.sample(prompt, {signal: ctl.signal, modelTier:'default', cache:false, onText: ({text}) => { S.busy.analysis = text; renderAnalysisOut(); }});
+    delete S.busy.analysis; S.analysis = {text: r.text, at: Date.now()}; renderAnalysisOut(); putMeta('analysis', S.analysis);
+  } catch(e){ const part = e && e.text; delete S.busy.analysis; renderAnalysisOut(); if (part) $('an-ai-out').insertAdjacentHTML('afterbegin', `<div class="md">${md(part)}</div>`); if (e.code !== 'cancelled') $('an-ai-out').insertAdjacentHTML('afterbegin', `<div class="note err">${esc(aiErr(e))}</div>`); }
+  finally { $('an-ai-go').disabled = !S.sample; $('an-ai-stop').hidden = true; }
+}
+function renderImport(){
+  const el = $('im-out'); const rows = S.importRows;
+  if (!rows){ return; }
+  if (rows.loading){ el.innerHTML = '<div class="note">Claude is reading your data…</div>'; return; }
+  if (!rows.length){ el.innerHTML = '<div class="note err">No posts found in that. Check the paste or screenshots and try again.</div>'; return; }
+  el.innerHTML = `<div class="stack"><div class="tablewrap"><table><thead><tr><th>Date</th><th>Platform</th><th>Post</th><th class="num">Views</th><th class="num">Likes</th><th class="num">Shares</th></tr></thead><tbody>
+    ${rows.map(p => `<tr><td class="mono">${esc(p.date||'?')}</td><td>${platChip(p.platform)}</td><td class="title">${esc(p.title)}</td><td class="num">${compact(p.views)}</td><td class="num">${compact(p.likes)}</td><td class="num">${compact(p.shares)}</td></tr>`).join('')}
+  </tbody></table></div><div class="row"><button type="button" class="primary" id="im-save">Save ${rows.length} post${rows.length>1?'s':''}</button><button type="button" class="ghost" id="im-cancel">Discard</button></div></div>`;
+}
+async function importData(){
+  if (!S.sample) return;
+  const text = $('im-text').value.trim(); const files = [...$('im-imgs').files];
+  if (!text && !files.length){ setMsg('im-out', 'Paste some rows or add a screenshot first.', 'err'); return; }
+  if (files.length && !S.imgMax){ setMsg('im-out', "Screenshots can't be sent to Claude in this view. Paste the numbers as text instead.", 'err'); return; }
+  S.importRows = {loading:true, length:1}; renderImport(); $('im-go').disabled = true;
+  const pillars = (S.profile.pillars||[]).join(', ');
+  const prompt = `Extract one record per video post from the analytics data below${files.length ? ' and the attached screenshots of analytics screens' : ''}. Today is ${todayIso()}; resolve relative dates ("2d ago", "Nov 3") to YYYY-MM-DD.
+Classify each post's pillar as one of: ${pillars}. Guess the format (talking head, skit, green screen, tutorial, story, news breakdown) from the title if possible, else "".
+Platform must be "tt" (TikTok), "ig" (Instagram) or "yt" (YouTube) when you can tell, else null.
+Numbers like 1.2K or 3,4M must become plain integers. Missing values are 0. "watch" is average percentage viewed (0-100) if given, else 0.
+
+DATA
+${text.slice(0, 60000) || '(see screenshots)'}
+
+Reply with only a JSON array: [{"date":"YYYY-MM-DD","platform":"tt","title":"...","pillar":"...","format":"...","views":0,"likes":0,"comments":0,"shares":0,"saves":0,"follows":0,"watch":0}]`;
+  try {
+    const opts = {modelTier:'default', cache:false};
+    if (files.length) opts.images = files.slice(0, S.imgMax);
+    const r = await S.sample.json(prompt, opts);
+    const def = $('im-plat').value;
+    S.importRows = (Array.isArray(r) ? r : []).filter(x => x && (x.title || x.views)).map(x => ({
+      date: /^\d{4}-\d{2}-\d{2}$/.test(x.date||'') ? x.date : todayIso(), platform: PLAT[x.platform] ? x.platform : def,
+      title: String(x.title||'Untitled').slice(0, 200), pillar: String(x.pillar||''), format: String(x.format||''),
+      views: num(x.views), likes: num(x.likes), comments: num(x.comments), shares: num(x.shares), saves: num(x.saves), follows: num(x.follows), watch: num(x.watch)||0 }));
+  } catch(e){ S.importRows = null; setMsg('im-out', aiErr(e), 'err'); }
+  finally { $('im-go').disabled = !S.sample; renderImport(); }
+}
+
+/* ----- challenge ----- */
+function renderChallenge(){
+  const c = challenge(); const t = todayIso();
+  if (document.activeElement !== $('ch-start')) $('ch-start').value = S.profile.challengeStart || '';
+  if (document.activeElement !== $('ch-goal')) $('ch-goal').value = String(goal());
+  if (!c){
+    $('ch-stats').innerHTML = `<span class="eyebrow">Not started</span><div class="bigday">DAY 000<small> /090</small></div><p class="muted">Pick a start date in the rules below, or start today.</p><button type="button" class="primary" id="start-today">Start today</button>`;
+    $('ch-grid').innerHTML = Array.from({length: CHALLENGE_DAYS}, (_, i) => `<div class="day future"><span>${i+1}</span></div>`).join('');
+    $('ch-day').innerHTML = `<div class="empty"><b>Your 90 days show up here</b>Each square is one day. Fill all of them.</div>`;
+    return;
+  }
+  const n = Math.min(Math.max(c.dayNum, 0), CHALLENGE_DAYS); const elapsed = Math.max(0, Math.min(CHALLENGE_DAYS, c.dayNum));
+  const rate = elapsed ? c.done / elapsed : 0;
+  $('ch-stats').innerHTML = `
+    <span class="eyebrow">${fmtDate(c.start)} → ${fmtDate(c.end)}</span>
+    <div class="bigday">DAY ${pad3(n)}<small> /090</small></div>
+    <div class="prog"><i style="width:${(c.done/CHALLENGE_DAYS*100).toFixed(1)}%"></i></div>
+    <div class="grid-2">
+      <div class="tile"><span class="eyebrow">Days done</span><div class="n">${c.done}</div><div class="d muted">${elapsed ? pct(rate)+' of days so far' : 'starts soon'}</div></div>
+      <div class="tile"><span class="eyebrow">Current streak</span><div class="n">${c.streak}</div><div class="d muted">best ${c.longest}</div></div>
+      <div class="tile"><span class="eyebrow">Posts logged</span><div class="n">${S.posts.filter(p => p.date >= c.start && p.date <= c.end && !p.example).length}</div><div class="d muted">across platforms</div></div>
+      <div class="tile"><span class="eyebrow">Days left</span><div class="n">${Math.max(0, CHALLENGE_DAYS - Math.max(c.dayNum, 0))}</div><div class="d muted">${c.dayNum > CHALLENGE_DAYS ? 'finished' : 'keep going'}</div></div>
+    </div>`;
+  let cells = '';
+  for (let i = 0; i < CHALLENGE_DAYS; i++){
+    const d = addDays(c.start, i); const st = dayPlats(d); const future = d > t; const done = !future && dayDone(d);
+    const cls = ['day', future ? 'future' : '', done ? 'done' : '', !future && !done && d !== t && dayCount(d) === 0 ? 'miss' : '', d === t ? 'today' : '', S.selDay === d ? 'sel' : ''].join(' ');
+    const label = `Day ${i+1}, ${fmtDate(d)}: ${PLATS.filter(p => st[p.id]).map(p => p.name).join(', ') || 'nothing posted'}`;
+    cells += `<button type="button" class="${cls}" ${future ? 'disabled' : `data-sel-day="${d}"`} aria-label="${esc(label)}" title="${esc(label)}"><span>${i+1}</span><span class="pips">${PLATS.map(p => `<i style="${st[p.id] ? 'background:'+p.color : ''}"></i>`).join('')}</span></button>`;
+  }
+  $('ch-grid').innerHTML = cells;
+  const sd = S.selDay && S.selDay >= c.start && S.selDay <= t ? S.selDay : (t >= c.start && t <= c.end ? t : null);
+  if (!sd){ $('ch-day').innerHTML = `<div class="empty"><b>Pick a day</b>Tap any past day to fix what you posted.</div>`; return; }
+  const posted = S.posts.filter(p => p.date === sd && !p.example);
+  $('ch-day').innerHTML = `<div class="stack"><div class="card-head" style="margin:0"><h3>Day ${daysBetween(c.start, sd)+1} · ${parseIso(sd).toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'})}</h3>${dayDone(sd) ? '<span class="chip good">✓ Counted</span>' : `<span class="chip">${dayCount(sd)}/${goal()} platforms</span>`}</div>
+    ${platToggles(sd)}
+    ${posted.length ? `<div class="small muted">Logged posts: ${posted.map(p => `${PLAT[p.platform]?.name}: “${esc(p.title)}”`).join(' · ')}</div>` : ''}</div>`;
+}
+
+/* ----- brand ----- */
+function fillForms(){
+  const p = S.profile; const set = (id, v) => { const el = $(id); if (el && document.activeElement !== el) el.value = v ?? ''; };
+  set('br-name', p.name); set('br-handle', p.handle); set('br-audience', p.audience); set('br-pillars', (p.pillars||[]).join(', '));
+  set('br-voice', p.voice); set('br-goal', p.goal); set('br-cta', p.cta); set('br-editor', p.editor);
+}
+function editorSetupPrompt(){
+  const p = S.profile;
+  return `You are my video editor for short-form content. I'm ${p.name || '[your name]'}${p.handle ? ' (' + p.handle + ')' : ''}. I post the same video to TikTok, Instagram Reels and YouTube Shorts, and I'm in a 90-day daily posting challenge, so speed matters as much as polish.
+
+WHO I MAKE VIDEOS FOR
+${p.audience || '[audience]'}
+
+MY PILLARS
+${(p.pillars||[]).join(', ')}
+
+MY VOICE
+${p.voice || '[describe your voice]'}
+
+WHAT I'M BUILDING TOWARD
+${p.goal || '[goal]'}
+${p.cta ? '\nMY USUAL CALL TO ACTION\n' + p.cta + '\n' : ''}${p.editor ? '\nHOW I LIKE MY EDITS\n' + p.editor + '\n' : ''}
+HOUSE RULES FOR EVERY EDIT
+- The hook lands in the first 1.5 seconds. Cut every breath, pause and "um" before it.
+- Something changes on screen every 2 to 4 seconds: a cut, punch-in, caption pop, B-roll or sound effect.
+- Captions on everything, inside the safe zone (clear of the bottom 20% and the right-side buttons), with key words highlighted.
+- End on a loop back to the start or a one-line CTA. Never a slow fade.
+- Keep it as short as the idea allows. Cut any line that doesn't earn its place.
+
+HOW WE WORK
+I'll send you a "recreate brief" or a script, plus my raw footage. Each time, give me back:
+1. A timecoded cut list
+2. SRT captions
+3. B-roll, zoom and sound-effect cues with timecodes
+4. 3 cover text options and 3 titles
+5. A caption and hashtags for TikTok, Reels and Shorts
+If anything in my footage doesn't match the brief, tell me what to re-record.`;
+}
+function renderBrand(){ fillForms(); $('br-prompt').textContent = editorSetupPrompt(); }
+
+/* ---------- events ---------- */
+document.addEventListener('click', async ev => {
+  const t = ev.target.closest('button, [data-sel-video], [data-open-video]'); if (!t) return;
+  const d = t.dataset;
+  if (d.confirm === undefined && !d.delVideo && !d.delIdea && !d.delPost && S.confirmDel){ S.confirmDel = null; }
+  if (t.id === 'start-today'){ S.profile = {...S.profile, challengeStart: todayIso()}; renderAll(); await saveProfile(); toast('Day 1. Go post.'); return; }
+  if (d.toggleDay){ toggleDay(d.toggleDay, d.plat); return; }
+  if (d.openVideo){ S.selVideo = d.openVideo; return; }
+  if (d.selVideo){ S.selVideo = d.selVideo; renderRecreate(); if (window.innerWidth < 900) $('rc-detail').scrollIntoView({behavior:'smooth', block:'start'}); return; }
+  if (d.break){ breakDown(d.break); return; }
+  if (d.eprompt){ writeEditorPrompt(d.eprompt); return; }
+  if (d.stop){ ctrls[d.stop]?.abort(); return; }
+  if (d.copyEp){ const v = S.videos.find(x => x.id === d.copyEp); if (v) copyText(v.editorPrompt || '', t); return; }
+  if (d.copyScript){ const v = S.videos.find(x => x.id === d.copyScript); if (v) copyText(v.breakdown?.myVersion?.script || '', t); return; }
+  if (d.delVideo){ if (S.confirmDel === d.delVideo){ S.confirmDel = null; S.selVideo = null; await delDoc('videos', d.delVideo); toast('Deleted'); } else { S.confirmDel = d.delVideo; renderVideoDetail(); } return; }
+  if (d.f && t.closest('#rc-filter')){ S.rcFilter = d.f; syncSeg('rc-filter', 'f', d.f); renderRecreate(); return; }
+  if (d.f && t.closest('#id-filter')){ S.idFilter = d.f; syncSeg('id-filter', 'f', d.f); renderIdeas(); return; }
+  if (d.saveIdea){ const i = S.ideaResults.find(x => x._k === d.saveIdea); if (!i) return; i._saved = true; const id = newId();
+    const {_k, _saved, ...rest} = i; await putDoc('ideas', id, {...rest, status:'open', createdAt: Date.now()}); toast('Idea saved'); return; }
+  if (d.scriptIdea){ scriptIdea(d.scriptIdea); return; }
+  if (d.ideaUsed){ const i = S.ideas.find(x => x.id === d.ideaUsed); if (i) await patchDoc('ideas', i.id, {status: i.status === 'used' ? 'open' : 'used'}); return; }
+  if (d.copyIdea){ const i = S.ideas.find(x => x.id === d.copyIdea); if (i) copyText(i.script || '', t); return; }
+  if (d.delIdea){ if (S.confirmDel === d.delIdea){ S.confirmDel = null; await delDoc('ideas', d.delIdea); } else { S.confirmDel = d.delIdea; renderIdeas(); } return; }
+  if (d.delPost){ if (S.confirmDel === d.delPost){ S.confirmDel = null; await delDoc('posts', d.delPost); } else { S.confirmDel = d.delPost; renderAnalytics(); } return; }
+  if (d.p){ S.period = d.p; syncSeg('an-period', 'p', d.p); saveUi(); renderAnalytics(); return; }
+  if (d.pl){ S.plat = d.pl; syncSeg('an-plat', 'pl', d.pl); saveUi(); renderAnalytics(); return; }
+  if (d.selDay){ S.selDay = d.selDay; renderChallenge(); return; }
+  if (t.id === 'id-stop'){ ctrls.ideas?.abort(); return; }
+  if (t.id === 'an-ai-go'){ analyze(); return; }
+  if (t.id === 'an-ai-stop'){ ctrls.analysis?.abort(); return; }
+  if (t.id === 'im-cancel'){ S.importRows = null; $('im-out').innerHTML = ''; return; }
+  if (t.id === 'im-save'){ const rows = S.importRows || []; S.importRows = null; $('im-out').innerHTML = '';
+    for (const r of rows) await putDoc('posts', newId(), {...r, createdAt: Date.now()});
+    $('im-text').value = ''; $('im-imgs').value = ''; toast(`Saved ${rows.length} post${rows.length>1?'s':''}`); return; }
+  if (t.id === 'tbl-more'){ S.tableAll = !S.tableAll; renderAnalytics(); return; }
+  if (t.id === 'br-copy'){ copyText(editorSetupPrompt(), t); return; }
+  if (t.id === 'rc-save-only'){ addVideo(false); return; }
+});
+document.addEventListener('keydown', ev => { if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.dataset && ev.target.dataset.selVideo){ ev.preventDefault(); ev.target.click(); } });
+document.addEventListener('change', async ev => {
+  const t = ev.target;
+  if (t.dataset.stage){ await patchDoc('videos', t.dataset.stage, {status: t.value}); toast('Stage updated'); }
+});
+
+$('rc-url').addEventListener('input', () => { const p = detectPlat($('rc-url').value); $('rc-url-hint').innerHTML = p ? `Detected ${platChip(p)}` : 'TikTok, Instagram Reels or YouTube.'; });
+$('rc-file').addEventListener('change', async () => {
+  const f = $('rc-file').files[0]; if (!f){ S.frames = null; renderFrames(); return; }
+  const n = Math.max(1, Math.min(10, S.imgMax || 8));
+  S.frames = {loading:true}; renderFrames();
+  try { const r = await extractFrames(f, n); S.frames = r; }
+  catch(e){ S.frames = {error:"Couldn't read frames from that file. Try an .mp4, or paste the transcript instead."}; }
+  renderFrames();
+});
+$('rc-form').addEventListener('submit', ev => { ev.preventDefault(); addVideo(true); });
+async function addVideo(analyzeNow){
+  const url = $('rc-url').value.trim(), transcript = $('rc-transcript').value.trim();
+  const frames = S.frames && S.frames.frames ? S.frames.frames : null;
+  if (!url && !transcript && !frames){ setMsg('rc-msg', 'Add a link, a transcript or a video file first.', 'err'); return; }
+  if (analyzeNow && !transcript && !frames){ setMsg('rc-msg', "Claude can't open links from here. Paste the transcript or upload the video file so it has something to work from. Or press Save only.", 'err'); return; }
+  if (analyzeNow && frames && !S.imgMax && !transcript){ setMsg('rc-msg', "Video frames can't be sent to Claude in this view. Paste the transcript instead.", 'err'); return; }
+  const id = newId();
+  await putDoc('videos', id, {url, platform: detectPlat(url), title: $('rc-title').value.trim(), creator: $('rc-creator').value.trim(), transcript, notes: $('rc-notes').value.trim(), status:'saved', createdAt: Date.now()});
+  S.selVideo = id; setMsg('rc-msg', '');
+  for (const k of ['rc-url','rc-title','rc-creator','rc-transcript','rc-notes','rc-file']) $(k).value = '';
+  $('rc-url-hint').textContent = 'TikTok, Instagram Reels or YouTube.';
+  const useFrames = frames && S.imgMax ? frames : null; S.frames = null; renderFrames();
+  renderRecreate();
+  if (window.innerWidth < 900) $('rc-detail').scrollIntoView({behavior:'smooth', block:'start'});
+  if (analyzeNow) breakDown(id, useFrames); else toast('Saved to library');
+}
+$('id-form').addEventListener('submit', ev => { ev.preventDefault(); pitchIdeas(); });
+$('im-form').addEventListener('submit', ev => { ev.preventDefault(); importData(); });
+$('po-form').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const v = id => $(id).value.trim();
+  if (!v('po-title') && !v('po-views')){ $('po-msg').textContent = 'Add at least a title and views.'; return; }
+  await putDoc('posts', newId(), { date: v('po-date') || todayIso(), platform: v('po-plat'), title: v('po-title') || 'Untitled', pillar: v('po-pillar'), format: v('po-format'),
+    views: num(v('po-views')), likes: num(v('po-likes')), comments: num(v('po-comments')), shares: num(v('po-shares')), saves: num(v('po-saves')), follows: num(v('po-follows')), watch: num(v('po-watch')), url: v('po-url'), createdAt: Date.now() });
+  for (const k of ['po-title','po-format','po-views','po-likes','po-comments','po-shares','po-saves','po-follows','po-watch','po-url']) $(k).value = '';
+  $('po-msg').textContent = ''; toast('Post logged');
+});
+$('ch-form').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  S.profile = {...S.profile, challengeStart: $('ch-start').value || todayIso(), dailyGoal: num($('ch-goal').value) || 3};
+  renderAll(); await saveProfile(); toast('Rules saved');
+});
+$('br-form').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const v = id => $(id).value.trim();
+  const pillars = v('br-pillars').split(',').map(s => s.trim()).filter(Boolean);
+  S.profile = {...S.profile, name: v('br-name'), handle: v('br-handle'), audience: v('br-audience'), pillars: pillars.length ? pillars : DEFAULT_PROFILE.pillars,
+    voice: v('br-voice'), goal: v('br-goal'), cta: v('br-cta'), editor: v('br-editor')};
+  renderAll(); await saveProfile(); toast('Brand kit saved');
+});
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (S.view === 'analytics'){ const r = periodRange(); const cur = S.posts.filter(p => inRange(p, r) && platOk(p)); drawLine(cur, r); drawBars(cur); } }, 150); });
+
+fillForms();
+boot();
+})();
+</script>
