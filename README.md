@@ -11,28 +11,22 @@ One dashboard for a short-form creator posting the same videos to **TikTok, Inst
 Kept lean on purpose. More features get added later as needed.
 
 - **90-day challenge** (always at the top): day counter, streak, and three buttons to tick where you posted today. A day counts when you post on at least one platform.
-- **Recreate:** paste a video link plus its transcript, or upload the video file. You get back one prompt to paste into your AI editor chat with your footage. It covers why the original works, your version of the script, edit instructions and captions for each platform.
+- **Recreate:** paste a TikTok, Reel or YouTube link. A Claude cloud routine on your own subscription downloads it, transcribes it with Whisper and writes your script plus an editor prompt. They show up in the app 2 to 4 minutes later. See *How link transcription works* below.
 - **Ideas:** one button gives you 8 ideas, each with the first line to say on camera. You can paste news first for timely ideas.
 - **Stats:** log each post (video, platform, views, likes), see this week's numbers, and ask Claude what's working.
 
-## Getting transcripts
+## How link transcription works
 
-The page can't download videos from TikTok, Instagram or YouTube itself (the artifact sandbox blocks outside network access). Three ways in:
+1. The app saves the link as a "working" entry and starts the **Creator app transcriber** routine (`trig_01PC1unX4e44jJUkkzwmephv`) through your Claude Code connector.
+2. The routine runs in the `creator-transcriber` cloud environment, which has open internet access. It runs `tools/worker.py`: it downloads the audio with yt-dlp (with a backup downloader for TikTok) and transcribes it with faster-whisper.
+3. Claude writes the script and editor prompt and saves them into the app's private data. The app updates by itself.
 
-1. **YouTube:** open *…more*, then *Show transcript*, and copy it into the Recreate form.
-2. **Upload the video file:** Claude reads burned-in captions from the frames. This works well for most short-form videos.
-3. **Word-for-word audio transcript:** run the local script:
+What works: TikTok. What usually fails: YouTube (it blocks downloads from cloud servers) and Instagram (it needs a login). These show up in the app as "Couldn't transcribe" with the reason.
 
-```bash
-pip install -r tools/requirements.txt     # also needs ffmpeg installed
-python tools/transcribe.py "https://www.tiktok.com/@someone/video/123"
-python tools/transcribe.py "<instagram link>" --cookies-from-browser chrome
-```
-
-It prints a timestamped transcript. Paste it into the Recreate tab.
+You can also run `python tools/transcribe.py <link>` on your own computer for a word-for-word transcript of any link.
 
 ## Workflow
 
 1. Start the challenge.
-2. Every day: recreate a video or pick an idea, film it, paste the editor prompt plus your footage into your editor chat, post it.
+2. Every day: paste a link in Recreate, film the script, give your editor chat the editor prompt plus the original video and your footage, then post it.
 3. Log the post in Stats. Once a week, press **Analyze my stats**.

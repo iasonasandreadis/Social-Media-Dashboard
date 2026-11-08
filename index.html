@@ -134,6 +134,9 @@ label.f{display:flex;flex-direction:column;gap:5px;font-size:.82rem;font-weight:
 .md h4:first-child{margin-top:0}
 .md ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
 .md p{margin:4px 0}
+.spin{display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);animation:spin 1s linear infinite;vertical-align:-2px;margin-right:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
 .toast{position:absolute;left:50%;bottom:84px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.9rem;font-weight:600;z-index:40;white-space:nowrap}
 </style>
 
@@ -144,10 +147,9 @@ label.f{display:flex;flex-direction:column;gap:5px;font-size:.82rem;font-weight:
     <section id="v-recreate" class="view">
       <h2 class="view-title">Recreate a video</h2>
       <form class="card" id="rc-form" autocomplete="off">
-        <input type="url" id="rc-url" aria-label="Video link" placeholder="Video link">
-        <textarea id="rc-text" aria-label="Transcript" placeholder="Paste the transcript or captions"></textarea>
-        <label class="upload" id="rc-upload"><input type="file" id="rc-file" accept="video/*"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg><span id="rc-file-name">Or upload the video</span></label>
-        <button type="submit" class="primary" id="rc-go">Make editor prompt</button>
+        <input type="url" id="rc-url" aria-label="Video link" placeholder="Paste a TikTok, Reel or YouTube link" enterkeyhint="go" inputmode="url">
+        <button type="submit" class="primary" id="rc-go">Transcribe &amp; write script</button>
+        <p class="muted" style="font-size:.82rem">Claude downloads the video, transcribes it and writes your script and editor prompt. Takes 2 to 4 minutes. You can close the app meanwhile.</p>
         <div id="rc-msg"></div>
       </form>
       <h3 class="list-h">Your videos</h3>
@@ -220,7 +222,7 @@ const PLAT = Object.fromEntries(PLATS.map(p => [p.id, p]));
 const ABOUT = 'A creator building a personal brand with short-form videos about startups, AI, tech news, skits and general life, cross-posted to TikTok, Instagram Reels and YouTube Shorts. Goal: grow an audience and go viral consistently. Currently doing a 90-day daily posting challenge.';
 const DAYS = 90;
 
-const S = { db:null, sample:null, imgMax:0, live:false, videos:[], posts:[], ideas:[], analysis:null, start:'', days:{}, sheet:null, confirm:null, busy:{}, logPlat:'tt' };
+const S = { db:null, sample:null, mcp:undefined, vtab:null, live:false, videos:[], posts:[], ideas:[], analysis:null, start:'', days:{}, sheet:null, confirm:null, busy:{}, logPlat:'tt' };
 
 /* utils */
 const $ = id => document.getElementById(id);
@@ -262,8 +264,9 @@ const saveChallenge = () => putMeta('challenge', {start:S.start, days:S.days});
 async function boot(){
   route();
   const c = window.claude;
-  if (!c || typeof c.use !== 'function') return;
-  c.use('sample').then(async s => { S.sample = s; if (s){ try { const l = await s.limits(); S.imgMax = l.images ? l.images.maxCount : 0; } catch(e){} } render(); });
+  if (!c || typeof c.use !== 'function'){ S.mcp = null; render(); return; }
+  c.use('mcp').then(m => { S.mcp = m; render(); });
+  c.use('sample').then(async s => { S.sample = s; if (s){ } render(); });
   const db = await c.use('db');
   if (!db){ toast('Not saving: open this page in Claude'); return; }
   S.db = db;
@@ -310,14 +313,27 @@ function renderTop(){
     <div class="bar" aria-label="${done} of 90 days done"><i style="width:${Math.max(2, done/DAYS*100).toFixed(1)}%"></i></div>`;
 }
 
+const STALE_MS = 12 * 60 * 1000;
+function vState(v){
+  if (v.status === 'working') return Date.now() - num(v.startedAt || v.createdAt) > STALE_MS ? 'stale' : 'working';
+  if (v.status === 'error') return 'error';
+  return 'done';
+}
+function linkName(u){ try { const x = new URL(u); return x.hostname.replace(/^www\./,'') + x.pathname.slice(0, 24); } catch(e){ return u || 'Video'; } }
 function renderRecreate(){
-  $('rc-go').disabled = !!S.busy.rc || !S.sample;
-  $('rc-go').textContent = S.busy.rc ? 'Working on it…' : 'Make editor prompt';
-  $('rc-list').innerHTML = S.videos.length ? `<div class="rows">${S.videos.map(v => `
-    <button type="button" class="r" data-open-video="${esc(v.id)}">
-      <span class="main"><span class="t">${esc(v.title || 'Untitled video')}</span><span class="s">${tag(v.platform)}<span>${v.createdAt ? new Date(v.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric'}) : ''}</span></span></span>
-      <span class="chev" aria-hidden="true">›</span></button>`).join('')}</div>`
-    : `<div class="rows"><div class="empty">Your editor prompts get saved here.</div></div>`;
+  $('rc-go').disabled = !!S.busy.rc || S.mcp === null;
+  $('rc-go').textContent = S.busy.rc ? 'Sending…' : 'Transcribe & write script';
+  if (S.mcp === null && !$('rc-msg').innerHTML) msg('rc-msg', 'Transcribing works when this app is open in Claude.', true);
+  $('rc-list').innerHTML = S.videos.length ? `<div class="rows">${S.videos.map(v => {
+    const st = vState(v); const mins = Math.max(0, Math.floor((Date.now() - num(v.startedAt || v.createdAt)) / 60000));
+    const status = st === 'working' ? `<span class="spin" aria-hidden="true"></span>Working… ${mins ? mins + ' min' : 'just started'}`
+      : st === 'stale' ? '<span style="color:var(--bad)">Taking too long · tap to retry</span>'
+      : st === 'error' ? `<span style="color:var(--bad)">Couldn't transcribe · tap for why</span>`
+      : `${tag(v.platform || detect(v.url))}<span>${v.createdAt ? new Date(v.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric'}) : ''}</span>`;
+    return `<button type="button" class="r" data-open-video="${esc(v.id)}">
+      <span class="main"><span class="t">${esc(v.title || linkName(v.url))}</span><span class="s">${status}</span></span>
+      <span class="chev" aria-hidden="true">›</span></button>`; }).join('')}</div>`
+    : `<div class="rows"><div class="empty">Paste a link above. Your scripts and editor prompts get saved here.</div></div>`;
 }
 
 function renderIdeas(){
@@ -355,27 +371,33 @@ function renderSheet(){
   $('scrim').hidden = !s; log.hidden = !s || s.type !== 'log'; view.hidden = !s || s.type === 'log';
   if (!s || s.type === 'log') return;
   const title = $('sv-title'), body = $('sv-body'), foot = $('sv-foot');
-  if (s.type === 'working'){
-    title.textContent = 'Writing your prompt…';
-    body.dataset.key = 'working';
-    if (!$('rc-live')){ body.innerHTML = `<div class="out" id="rc-live"></div>`; }
-    $('rc-live').textContent = S.busy.rcText || 'Claude is reading the video. This takes about a minute.';
-    foot.innerHTML = `<button type="button" class="primary" disabled>Working…</button>`;
-    return;
-  }
   if (s.type === 'video'){
     const v = S.videos.find(x => x.id === s.id); if (!v){ S.sheet = null; renderSheet(); return; }
-    title.textContent = v.title || 'Untitled video';
-    const key = 'video:' + v.id + ':' + (v.prompt||'').length + ':' + S.confirm;
+    const st = vState(v);
+    title.textContent = v.title || linkName(v.url);
+    const tabs = v.script ? ['script','prompt','transcript'] : ['prompt','transcript'];
+    if (!tabs.includes(S.vtab)) S.vtab = tabs[0];
+    const key = ['video', v.id, st, (v.prompt||'').length, (v.script||'').length, S.confirm, S.vtab].join(':');
     if (body.dataset.key !== key){
       body.dataset.key = key;
-      body.innerHTML = `<div class="out">${esc(v.prompt || '')}</div>
-        ${v.transcript ? `<details><summary>Show transcript</summary><div class="out muted">${esc(v.transcript)}</div></details>` : ''}
-        <div class="row" style="justify-content:space-between">${v.url ? `<a href="${esc(v.url)}" target="_blank" rel="noopener" style="font-size:.9rem">Open original ↗</a>` : '<span></span>'}
-          <button type="button" data-del-video="${esc(v.id)}" style="min-height:40px;border-color:transparent;color:var(--bad)">${S.confirm === v.id ? 'Tap again to delete' : 'Delete'}</button></div>`;
+      const del = `<button type="button" data-del-video="${esc(v.id)}" style="min-height:40px;border-color:transparent;color:var(--bad)">${S.confirm === v.id ? 'Tap again to delete' : 'Delete'}</button>`;
+      const orig = v.url ? `<a href="${esc(v.url)}" target="_blank" rel="noopener" style="font-size:.9rem">Open original ↗</a>` : '<span></span>';
+      if (st === 'working') body.innerHTML = `<div class="note"><span class="spin" aria-hidden="true"></span> Claude is downloading and transcribing this video. It usually takes 2 to 4 minutes. You can close the app; the result shows up here.</div><div class="row" style="justify-content:space-between">${orig}${del}</div>`;
+      else if (st === 'stale' || st === 'error') body.innerHTML = `<div class="note err">${esc(st === 'stale' ? "This one didn't finish. Try again; if it keeps failing, the site may be blocking downloads." : (v.error || "Couldn't transcribe this video."))}</div><div class="row" style="justify-content:space-between">${orig}${del}</div>`;
+      else {
+        const label = {script:'Your script', prompt:'Editor prompt', transcript:'Transcript'};
+        const text = S.vtab === 'script' ? v.script : S.vtab === 'prompt' ? v.prompt : (v.transcript || 'No speech was detected in this video.');
+        body.innerHTML = `<div class="seg" style="grid-template-columns:repeat(${tabs.length},1fr)" role="tablist">${tabs.map(t => `<button type="button" data-vtab="${t}" role="tab" aria-pressed="${S.vtab === t}" aria-selected="${S.vtab === t}">${label[t]}</button>`).join('')}</div>
+          <div class="out">${esc(text || '')}</div>
+          <div class="row" style="justify-content:space-between">${orig}${del}</div>`;
+      }
       body.scrollTop = 0;
     }
-    foot.innerHTML = `<button type="button" class="primary" data-copy="${esc(v.id)}">Copy prompt</button>`;
+    if (st === 'working') foot.innerHTML = `<button type="button" class="primary" data-close>Close</button>`;
+    else if (st === 'stale' || st === 'error') foot.innerHTML = `<button type="button" class="primary" data-retry="${esc(v.id)}">Try again</button>`;
+    else foot.innerHTML = v.script
+      ? `<button type="button" class="grow" data-copy-script="${esc(v.id)}" style="background:var(--surface-2);border-color:transparent">Copy script</button><button type="button" class="grow" data-copy="${esc(v.id)}" style="background:var(--ink);color:var(--bg);border-color:var(--ink)">Copy editor prompt</button>`
+      : `<button type="button" class="primary" data-copy="${esc(v.id)}">Copy editor prompt</button>`;
     return;
   }
   if (s.type === 'analysis'){
@@ -387,72 +409,39 @@ function renderSheet(){
   }
 }
 
-/* AI: recreate */
-async function extractFrames(file, n){
-  const url = URL.createObjectURL(file); const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = url;
-  try {
-    await new Promise((res, rej) => { v.onloadeddata = res; v.onerror = rej; setTimeout(rej, 15000); });
-    const dur = v.duration; const times = [];
-    for (const t of [0.2, 1.2, 2.5]) if (t < dur && times.length < n) times.push(t);
-    const rest = n - times.length, from = Math.min(dur, 4);
-    for (let i = 0; i < rest; i++) times.push(Math.min(dur - 0.1, from + (dur - from) * (i + 0.5) / rest));
-    const sc = Math.min(1, 900 / Math.max(v.videoWidth, v.videoHeight)); const cv = document.createElement('canvas');
-    cv.width = Math.round(v.videoWidth*sc); cv.height = Math.round(v.videoHeight*sc); const ctx = cv.getContext('2d'); const out = [];
-    for (const t of times){
-      await new Promise(res => { const h = () => { v.removeEventListener('seeked', h); clearTimeout(to); res(); }; const to = setTimeout(h, 3000); v.addEventListener('seeked', h); v.currentTime = Math.max(0, t); });
-      ctx.drawImage(v, 0, 0, cv.width, cv.height); const b = await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.82)); if (b) out.push({t, blob:b});
-    }
-    return out;
-  } finally { URL.revokeObjectURL(url); }
+/* transcribe: hand the link to the user's own Claude cloud routine, which writes the result back into this app's data */
+const TRIGGER_ID = 'trig_01PC1unX4e44jJUkkzwmephv';
+const CCR = 'Claude Code Remote';
+function mcpErr(e){ const c = e && e.code;
+  return ({server_not_connected:"Your Claude Code connector isn't connected. Turn it on in claude.ai settings, then try again.", server_not_found:"Your Claude Code connector isn't connected. Turn it on in claude.ai settings, then try again.",
+    needs_reauth:'Reconnect your Claude Code connector in claude.ai settings, then try again.', consent_required:'Allow the app to use Claude Code when it asks, then try again.', not_granted:'Allow the app to use Claude Code when it asks, then try again.',
+    approval_required:'Approve the request in Claude, then try again.', blocked_by_policy:"Your account doesn't allow this connector here.", rate_limited:'Too many requests. Wait a minute and try again.',
+    tool_error:"Claude couldn't start the transcriber. Try again in a minute."})[c] || "Couldn't start the transcriber. Try again.";
 }
-function section(text, name){ const m = text.match(new RegExp('===' + name + '===\\s*([\\s\\S]*?)(?====[A-Z]+===|$)')); return m ? m[1].trim() : ''; }
-async function recreate(ev){
+async function startJob(id, url){
+  if (!S.mcp) throw {code:'server_not_connected'};
+  await S.mcp.callTool(CCR, 'fire_trigger', {trigger_id: TRIGGER_ID, text: JSON.stringify({id, url})});
+}
+async function transcribe(ev){
   ev.preventDefault(); blurActive();
-  if (!S.sample) return;
-  const url = $('rc-url').value.trim(), text = $('rc-text').value.trim(), file = $('rc-file').files[0];
-  if (!text && !file){ msg('rc-msg', 'Paste the transcript or upload the video. Claude can’t open links by itself.', true); return; }
-  msg('rc-msg', '');
-  S.busy.rc = true; S.busy.rcText = file ? 'Pulling frames from your video…' : ''; openSheet({type:'working'});
-  let frames = [];
-  try { if (file){ if (!S.imgMax) throw {code:'images_unavailable'}; frames = await extractFrames(file, Math.min(10, S.imgMax)); } }
-  catch(e){ S.busy = {}; closeSheet(); msg('rc-msg', e && e.code ? aiErr(e) : "Couldn't read that video. Try an .mp4, or paste the transcript.", true); return; }
-  S.busy.rcText = ''; renderSheet();
-  const prompt = `I want to recreate a short-form video that performed well, in my own style.
-
-ABOUT ME
-${ABOUT}
-
-THE VIDEO
-Link: ${url || 'not given'}
-${text ? 'Transcript / captions:\n"""\n' + text.slice(0, 20000) + '\n"""' : ''}
-${frames.length ? `I attached ${frames.length} frames from the video in order, at these seconds: ${frames.map(f => f.t.toFixed(1)).join(', ')}. Read the burned-in captions and on-screen text, and look at framing, shots and edit style.${text ? '' : ' There is no transcript, so reconstruct what is said from the captions and mark guesses with [?].'}` : ''}
-
-Reply in exactly this format, with these three markers and nothing else:
-===TITLE===
-a short name for this video, max 6 words
-===TRANSCRIPT===
-a clean transcript with [m:ss] timestamps where you can tell
-===PROMPT===
-A prompt I will paste into a separate Claude chat that is my AI video editor, along with my raw footage. Address the editor as "you". Plain text, short CAPITALISED headings, in this order:
-GOAL: what we're making and target length.
-WHY THE ORIGINAL WORKS: the hook (exact first line and what type it is), the beat-by-beat structure with timecodes, the pacing.
-MY VERSION: the same structure adapted to my topics and voice, as a ready-to-film script with [VISUAL] cues, plus 3 alternative hook lines.
-EDIT INSTRUCTIONS: the first 1.5 seconds, cut rhythm, zooms, captions style, B-roll and sound effects with timecodes, a pattern interrupt every 3 to 5 seconds, and an ending that loops or lands a follow CTA.
-POSTING: a caption and 3 to 5 hashtags each for TikTok, Instagram Reels and YouTube Shorts.
-WHAT TO SEND BACK: a timecoded cut list, SRT captions and 3 cover text options.`;
+  const url = $('rc-url').value.trim();
+  if (!/^https?:\/\/\S+\.\S+/.test(url)){ msg('rc-msg', 'Paste a full video link that starts with https://', true); return; }
+  if (S.videos.some(v => v.url === url && vState(v) === 'working')){ msg('rc-msg', "That link is already being transcribed.", true); return; }
+  msg('rc-msg', ''); S.busy.rc = true; render();
+  const id = newId(), now = Date.now();
+  putDoc('videos', id, {url, platform: detect(url), title:'', status:'working', createdAt: now, startedAt: now});
   try {
-    const opts = {modelTier:'default', cache:false, onText: ({text}) => { S.busy.rcText = section(text, 'PROMPT') || 'Writing your editor prompt…'; const o = $('rc-live'); if (o) o.textContent = S.busy.rcText; }};
-    if (frames.length) opts.images = frames.map(f => f.blob);
-    const r = await S.sample(prompt, opts);
-    const id = newId();
-    S.busy = {};
-    for (const k of ['rc-url','rc-text','rc-file']) $(k).value = '';
-    setFileLabel();
-    S.sheet = {type:'video', id};
-    putDoc('videos', id, {url, platform: detect(url), title: section(r.text, 'TITLE') || 'Untitled video', transcript: section(r.text, 'TRANSCRIPT') || text, prompt: section(r.text, 'PROMPT') || r.text, createdAt: Date.now()});
-  } catch(e){ S.busy = {}; closeSheet(); msg('rc-msg', aiErr(e), true); }
+    await startJob(id, url);
+    $('rc-url').value = ''; toast('Started. Takes 2 to 4 minutes.');
+  } catch(e){ delDoc('videos', id); msg('rc-msg', mcpErr(e), true); }
+  S.busy.rc = false; render();
 }
-function setFileLabel(){ const f = $('rc-file').files[0]; $('rc-file-name').textContent = f ? f.name : 'Or upload the video'; $('rc-upload').classList.toggle('has', !!f); }
+async function retry(id){
+  const v = S.videos.find(x => x.id === id); if (!v) return;
+  const now = Date.now();
+  try { await startJob(id, v.url); putDoc('videos', id, {...v, status:'working', error:'', startedAt: now}); S.vtab = null; toast('Trying again'); }
+  catch(e){ toast(mcpErr(e)); }
+}
 
 /* AI: ideas */
 async function ideas(ev){
@@ -507,7 +496,7 @@ Be specific and cite their posts. If there's too little data to say something, s
 
 /* events */
 document.addEventListener('click', ev => {
-  if (ev.target.id === 'scrim'){ if (!S.busy.rc) closeSheet(); return; }
+  if (ev.target.id === 'scrim'){ closeSheet(); return; }
   const t = ev.target.closest('button'); if (!t) return; const d = t.dataset;
   if (S.confirm && !d.delVideo && !d.delPost){ S.confirm = null; render(); }
   if (d.close !== undefined){ closeSheet(); return; }
@@ -515,8 +504,11 @@ document.addEventListener('click', ev => {
   if (d.dayPlat){ const t0 = today(), p = d.dayPlat;
     if (S.posts.some(x => x.date === t0 && x.platform === p) && !(S.days[t0]||{})[p]){ toast('Counted from a post you logged'); return; }
     const cur = {...(S.days[t0] || {})}; cur[p] = !cur[p]; S.days = {...S.days, [t0]: cur}; render(); saveChallenge(); return; }
-  if (d.openVideo){ openSheet({type:'video', id:d.openVideo}); return; }
+  if (d.openVideo){ S.vtab = null; openSheet({type:'video', id:d.openVideo}); return; }
   if (d.copy){ const v = S.videos.find(x => x.id === d.copy); if (v) copy(v.prompt || '', t); return; }
+  if (d.copyScript){ const v = S.videos.find(x => x.id === d.copyScript); if (v) copy(v.script || '', t); return; }
+  if (d.vtab){ S.vtab = d.vtab; renderSheet(); return; }
+  if (d.retry){ retry(d.retry); return; }
   if (d.copyIdea){ const i = S.ideas[Number(d.copyIdea)]; if (i) copy(`${i.hook}\n\n${i.title}: ${i.why}`, t); return; }
   if (d.delVideo){ if (S.confirm === d.delVideo){ S.confirm = null; S.sheet = null; delDoc('videos', d.delVideo); toast('Deleted'); } else { S.confirm = d.delVideo; renderSheet(); } return; }
   if (d.delPost){ if (S.confirm === d.delPost){ S.confirm = null; delDoc('posts', d.delPost); } else { S.confirm = d.delPost; render(); } return; }
@@ -525,9 +517,8 @@ document.addEventListener('click', ev => {
   if (t.id === 'an-open'){ openSheet({type:'analysis'}); if (!S.analysis && !S.busy.an) analyze(); return; }
   if (t.id === 'an-go'){ analyze(); return; }
 });
-document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && S.sheet && !S.busy.rc) closeSheet(); });
-$('rc-file').addEventListener('change', setFileLabel);
-$('rc-form').addEventListener('submit', recreate);
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && S.sheet) closeSheet(); });
+$('rc-form').addEventListener('submit', transcribe);
 $('id-form').addEventListener('submit', ideas);
 $('sheet-log').addEventListener('submit', ev => {
   ev.preventDefault();
@@ -539,6 +530,7 @@ $('sheet-log').addEventListener('submit', ev => {
   closeSheet(); toast('Post logged');
 });
 
+setInterval(() => { if (view === 'recreate' && S.videos.some(v => v.status === 'working') && !document.hidden) renderRecreate(); }, 30000);
 boot();
 })();
 </script>
