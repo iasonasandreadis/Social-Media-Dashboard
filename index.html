@@ -148,8 +148,8 @@ label.f{display:flex;flex-direction:column;gap:5px;font-size:.82rem;font-weight:
       <h2 class="view-title">Recreate a video</h2>
       <form class="card" id="rc-form" autocomplete="off">
         <input type="url" id="rc-url" aria-label="Video link" placeholder="Paste a TikTok, Reel or YouTube link" enterkeyhint="go" inputmode="url">
-        <button type="submit" class="primary" id="rc-go">Transcribe &amp; write script</button>
-        <p class="muted" style="font-size:.82rem">Claude downloads the video, transcribes it and writes your script and editor prompt. Takes 2 to 4 minutes. You can close the app meanwhile.</p>
+        <button type="submit" class="primary" id="rc-go">Get script &amp; editor prompt</button>
+        <p class="muted" style="font-size:.82rem">Claude downloads the video, copies its script word for word and writes the prompt for your editor. Takes 2 to 4 minutes. You can close the app meanwhile.</p>
         <div id="rc-msg"></div>
       </form>
       <h3 class="list-h">Your videos</h3>
@@ -322,7 +322,7 @@ function vState(v){
 function linkName(u){ try { const x = new URL(u); return x.hostname.replace(/^www\./,'') + x.pathname.slice(0, 24); } catch(e){ return u || 'Video'; } }
 function renderRecreate(){
   $('rc-go').disabled = !!S.busy.rc || S.mcp === null;
-  $('rc-go').textContent = S.busy.rc ? 'Sending…' : 'Transcribe & write script';
+  $('rc-go').textContent = S.busy.rc ? 'Sending…' : 'Get script & editor prompt';
   if (S.mcp === null && !$('rc-msg').innerHTML) msg('rc-msg', 'Transcribing works when this app is open in Claude.', true);
   $('rc-list').innerHTML = S.videos.length ? `<div class="rows">${S.videos.map(v => {
     const st = vState(v); const mins = Math.max(0, Math.floor((Date.now() - num(v.startedAt || v.createdAt)) / 60000));
@@ -333,7 +333,7 @@ function renderRecreate(){
     return `<button type="button" class="r" data-open-video="${esc(v.id)}">
       <span class="main"><span class="t">${esc(v.title || linkName(v.url))}</span><span class="s">${status}</span></span>
       <span class="chev" aria-hidden="true">›</span></button>`; }).join('')}</div>`
-    : `<div class="rows"><div class="empty">Paste a link above. Your scripts and editor prompts get saved here.</div></div>`;
+    : `<div class="rows"><div class="empty">Paste a link above. Each video's script and editor prompt get saved here.</div></div>`;
 }
 
 function renderIdeas(){
@@ -385,7 +385,7 @@ function renderSheet(){
       if (st === 'working') body.innerHTML = `<div class="note"><span class="spin" aria-hidden="true"></span> Claude is downloading and transcribing this video. It usually takes 2 to 4 minutes. You can close the app; the result shows up here.</div><div class="row" style="justify-content:space-between">${orig}${del}</div>`;
       else if (st === 'stale' || st === 'error') body.innerHTML = `<div class="note err">${esc(st === 'stale' ? "This one didn't finish. Try again; if it keeps failing, the site may be blocking downloads." : (v.error || "Couldn't transcribe this video."))}</div><div class="row" style="justify-content:space-between">${orig}${del}</div>`;
       else {
-        const label = {script:'Your script', prompt:'Editor prompt', transcript:'Transcript'};
+        const label = {script:'Script', prompt:'Editor prompt', transcript:'Timestamps'};
         const text = S.vtab === 'script' ? v.script : S.vtab === 'prompt' ? v.prompt : (v.transcript || 'No speech was detected in this video.');
         body.innerHTML = `<div class="seg" style="grid-template-columns:repeat(${tabs.length},1fr)" role="tablist">${tabs.map(t => `<button type="button" data-vtab="${t}" role="tab" aria-pressed="${S.vtab === t}" aria-selected="${S.vtab === t}">${label[t]}</button>`).join('')}</div>
           <div class="out">${esc(text || '')}</div>
